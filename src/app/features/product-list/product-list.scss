@@ -1,0 +1,138 @@
+// Variables
+$primary-color: #000; // Negro suave para coincidir con el botón "Guardar" del form
+$bg-hover: #f8f9fa;
+$border-color: #f0f0f0;
+
+// Estilo de la Tarjeta (Igual que el Formulario)
+.clean-card {
+  background: #fff;
+  border-radius: 16px; // Bordes muy redondeados
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); // Sombra muy sutil
+  overflow: hidden; // Para que la tabla no se salga de las esquinas redondeadas
+}
+
+// Estilos de la Tabla
+.clean-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: #fff;
+    border-bottom: 2px solid $border-color;
+
+    th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #adb5bd; // Gris claro para los títulos
+      padding: 1.5rem 1rem;
+      border: none;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid $border-color;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: $bg-hover; // Efecto hover suave
+
+        // Hacemos que los botones aparezcan/resalten al pasar el mouse
+        .btn-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+      }
+
+      td {
+        padding: 1.2rem 1rem;
+        vertical-align: middle;
+        border: none;
+      }
+    }
+  }
+}
+
+// Elementos Específicos
+
+.sku-badge {
+  background-color: #f1f3f5;
+  color: #495057;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.description-text {
+  display: block;
+  max-width: 250px; // Evita que descripciones largas rompan la tabla
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+}
+
+.price-tag {
+  font-weight: 600;
+  color: #198754; // Verde dinero
+  background-color: rgba(25, 135, 84, 0.1); // Fondo verde muy suave
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+// Botones de Acción Circulares (Icon Only)
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7; // Un poco transparentes por defecto
+
+  i {
+    font-size: 1rem;
+  }
+
+  // Estilo Botón Editar (Azul suave)
+  &.btn-edit {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+
+    &:hover {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+  }
+
+  // Estilo Botón Eliminar (Rojo suave)
+  &.btn-delete {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+
+    &:hover {
+      background-color: #dc3545;
+      color: #fff;
+    }
+  }
+}
+
+// Estado Vacío
+.empty-state {
+  i {
+    font-size: 3rem;
+    color: #dee2e6;
+  }
+}

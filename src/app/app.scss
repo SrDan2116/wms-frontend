@@ -1,0 +1,103 @@
+// Variables
+$primary-color: #000;
+$accent-color: #0d6efd; // Azul bootstrap estándar para detalles
+$navbar-height: 70px;
+
+.clean-navbar {
+  min-height: $navbar-height;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); // Sombra ultra suave
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+// Estilo del Logo
+.brand-icon {
+  width: 35px;
+  height: 35px;
+  background-color: $primary-color;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.tracking-tight {
+  letter-spacing: -0.5px;
+  color: #212529;
+}
+
+// Estilo de los Enlaces del Menú
+.nav-link {
+  font-weight: 500;
+  color: #6c757d !important;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0;
+  position: relative;
+
+  &:hover {
+    color: $primary-color !important;
+  }
+
+  // Cuando el link está activo (Angular pone esta clase)
+  &.active {
+    color: $primary-color !important;
+    font-weight: 600;
+
+    // Pequeño punto azul debajo del link activo
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      background-color: $primary-color;
+      border-radius: 50%;
+    }
+  }
+
+  i {
+    font-size: 1.1rem;
+    vertical-align: text-bottom;
+  }
+}
+
+// Botones de Icono (Campana)
+.btn-icon-nav {
+  background: transparent;
+  border: none;
+  color: #6c757d;
+  font-size: 1.2rem;
+  padding: 5px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $primary-color;
+  }
+}
+
+// Perfil de Usuario
+.user-profile {
+  cursor: pointer;
+
+  .avatar-circle {
+    width: 38px;
+    height: 38px;
+    background-color: #f1f3f5;
+    color: #495057;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .tiny-text {
+    font-size: 0.7rem;
+  }
+}

@@ -1,0 +1,48 @@
+<div class="container mt-5" style="max-width: 600px;">
+
+  <div class="mb-4">
+    <h2 class="fw-bold text-dark mb-1">
+      {{ isEditMode ? 'Editar Categoría' : 'Nueva Categoría' }}
+    </h2>
+    <p class="text-muted">Gestión de clasificaciones.</p>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-5">
+
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+
+        <div class="row g-4">
+
+          <div class="col-12">
+            <label class="form-label small text-muted fw-bold">NOMBRE DE LA CATEGORÍA</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text"><i class="bi bi-tag"></i></span>
+              <input type="text" class="form-control" formControlName="nombre" placeholder="Ej: Electrónicos">
+            </div>
+            <div class="text-danger small mt-1" *ngIf="form.get('nombre')?.invalid && form.get('nombre')?.touched">
+              Requerido (min 3 letras).
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label small text-muted fw-bold">DESCRIPCIÓN</label>
+            <textarea class="form-control clean-textarea" rows="3" formControlName="descripcion" placeholder="Detalles opcionales..."></textarea>
+          </div>
+
+        </div>
+
+        <div class="d-flex justify-content-end gap-3 mt-5">
+          <button type="button" class="btn btn-link text-decoration-none text-muted" routerLink="/categorias">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-dark px-5 rounded-pill" [disabled]="form.invalid">
+            Guardar
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>

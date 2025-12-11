@@ -1,0 +1,106 @@
+<div class="container mt-5" style="max-width: 1000px">
+
+  <div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">Inventario</h2>
+      <p class="text-muted mb-0">Gestión general de productos.</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary rounded-pill px-3" (click)="toggleVerEliminados()">
+        <i class="bi" [ngClass]="showingDeleted ? 'bi-arrow-left' : 'bi-recycle'"></i>
+        {{ showingDeleted ? 'Volver al Inventario' : 'Papelera' }}
+      </button>
+
+      <button
+        *ngIf="!showingDeleted"
+        class="btn btn-dark rounded-pill px-4"
+        routerLink="/productos/nuevo"
+      >
+        <i class="bi bi-plus-lg me-2"></i> Nuevo
+      </button>
+    </div>
+  </div>
+
+  <div class="card clean-card border-0">
+    <div class="card-body p-0">
+      <table class="table clean-table mb-0">
+        <thead>
+          <tr>
+            <th class="ps-4">SKU</th>
+            <th>PRODUCTO</th>
+            <th>PRECIO</th>
+            <th>PESO</th>
+            <th class="text-end pe-4">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          @for (prod of productos; track prod.id) {
+          <tr>
+            <td class="ps-4">
+              <span class="sku-badge">{{ prod.sku }}</span>
+            </td>
+
+            <td>
+              <div class="fw-bold text-dark">{{ prod.nombre }}</div>
+              <small class="text-muted description-text">{{ prod.descripcion }}</small>
+            </td>
+
+            <td>
+              <span class="price-tag">{{ prod.precioUnitario | currency : 'PEN' : 'S/. ' }}</span>
+            </td>
+
+            <td class="text-muted">{{ prod.pesoKg }} kg</td>
+
+            <td class="text-end pe-4">
+              <div class="d-flex justify-content-end gap-2">
+
+                <ng-container *ngIf="!showingDeleted">
+                    <button
+                      class="btn-icon btn-edit"
+                      title="Editar"
+                      [routerLink]="['/productos/editar', prod.id]"
+                    >
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+
+                    <button class="btn-icon btn-delete" title="Eliminar" (click)="eliminar(prod.id)">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                </ng-container>
+
+                <ng-container *ngIf="showingDeleted">
+                    <button
+                        class="btn-icon btn-restore text-success"
+                        title="Restaurar"
+                        (click)="restaurar(prod.id)"
+                        style="background-color: rgba(25,135,84,0.1)">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </ng-container>
+
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <div class="empty-state">
+                <i class="bi bi-box-seam"></i>
+                <h6 class="mt-3 text-muted">
+                    {{ showingDeleted ? 'La papelera está vacía' : 'No hay productos registrados' }}
+                </h6>
+
+                <button *ngIf="!showingDeleted" class="btn btn-link text-decoration-none" routerLink="/productos/nuevo">
+                  Crear el primero ahora
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

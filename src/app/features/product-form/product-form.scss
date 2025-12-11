@@ -1,0 +1,61 @@
+// Estilo "Clean Input": Fondo gris muy suave, sin bordes fuertes
+.clean-input {
+  border: 1px solid #e9ecef; // Borde muy sutil
+  border-radius: 8px;
+  background-color: #f8f9fa; // Fondo gris casi blanco
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+
+  // Cuando haces clic en el input, toda la caja brilla
+  &:focus-within {
+    background-color: #fff;
+    border-color: #000; // O tu color primario
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+  }
+
+  // El icono (parte izquierda)
+  .input-group-text {
+    background: transparent;
+    border: none;
+    color: #adb5bd; // Gris suave para iconos
+    padding-right: 0;
+  }
+
+  // El campo de texto (parte derecha)
+  .form-control, .form-select {
+    background: transparent;
+    border: none;
+    box-shadow: none; // Quitamos el brillo azul por defecto de Bootstrap
+    padding-left: 10px;
+    font-weight: 500;
+
+    &::placeholder {
+      color: #adb5bd;
+      font-weight: 400;
+    }
+  }
+}
+
+// Para el textarea que no está en un input-group
+.clean-textarea {
+  @extend .clean-input; // Hereda los estilos de arriba
+  padding: 15px;
+  border-radius: 8px;
+
+  &:focus {
+    background-color: #fff;
+    border-color: #000;
+  }
+}
+
+// Botones
+.btn-dark {
+  background-color: #1a1a1a;
+  border: none;
+  transition: transform 0.2s;
+
+  &:hover {
+    background-color: #000;
+    transform: translateY(-1px);
+  }
+}

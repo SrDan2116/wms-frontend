@@ -1,1 +1,11 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+body {
+  background-color: #f4f6f8;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #4facfe;
+  box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+}

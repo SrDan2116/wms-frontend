@@ -1,0 +1,112 @@
+<div class="container mt-5" style="max-width: 900px">
+  <div class="mb-4">
+    <h2 class="fw-bold text-dark mb-1">
+      {{ isEditMode ? 'Editar Producto' : 'Nuevo Producto' }}
+    </h2>
+    <p class="text-muted">Complete los detalles del ítem.</p>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-5">
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="row g-4">
+          <div class="col-md-4">
+            <label class="form-label small text-muted fw-bold">SKU</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="sku"
+                placeholder="Ej: LAP-HP-001"
+              />
+            </div>
+            <div
+              class="text-danger small mt-1"
+              *ngIf="form.get('sku')?.invalid && form.get('sku')?.touched"
+            >
+              Requerido (min 3 chars).
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label small text-muted fw-bold">NOMBRE DEL PRODUCTO</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text"><i class="bi bi-tag"></i></span>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="nombre"
+                placeholder="Nombre comercial"
+              />
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label small text-muted fw-bold">DESCRIPCIÓN</label>
+            <textarea
+              class="form-control clean-textarea"
+              rows="3"
+              formControlName="descripcion"
+              placeholder="Detalles técnicos..."
+            ></textarea>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-muted fw-bold">PRECIO (S/.)</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text text-success fw-bold">S/.</span>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="precioUnitario"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-muted fw-bold">PESO (Kg)</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text"><i class="bi bi-archive"></i></span>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="pesoKg"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-muted fw-bold">CATEGORÍA</label>
+            <div class="input-group clean-input">
+              <span class="input-group-text"><i class="bi bi-folder"></i></span>
+
+              <select class="form-select" formControlName="categoriaId">
+                <option [ngValue]="null" disabled>Seleccione una opción...</option>
+
+                @for (cat of categorias; track cat.id) {
+                <option [value]="cat.id">{{ cat.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-3 mt-5">
+          <button
+            type="button"
+            class="btn btn-link text-decoration-none text-muted"
+            routerLink="/productos"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-dark px-5 rounded-pill" [disabled]="form.invalid">
+            Guardar Producto
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -60,4 +60,27 @@ export class AuthService {
 updateProfile(data: any): Observable<any> {
   return this.http.put(`${environment.apiUrl}/usuario/me`, data);
 }
+
+forgotPassword(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, newPassword });
+  }
+
+  // --- SOLICITUD DE BORRADO (USUARIO) ---
+  requestAccountDeletion(motivo: string): Observable<string> {
+    // Nota: Llama al UsuarioController, no a Auth. Ajusta la URL si es necesario.
+    // Como tu endpoint está en UsuarioController, usamos environment.apiUrl/usuario
+    return this.http.post(`${environment.apiUrl}/usuario/solicitar-eliminacion`, { motivo }, { responseType: 'text' });
+  }
+
+  // --- UTILIDAD ADMIN ---
+  isAdmin(): boolean {
+    // Decodificar token básica para ver el rol (o guardar el rol en sessionStorage al login)
+    // Para simplificar, asumiremos que guardas el rol al hacer login.
+    // Mejor práctica: Guardar 'role' en sessionStorage en el método guardarSesion()
+    return sessionStorage.getItem('role') === 'ADMIN';
+  }
 }

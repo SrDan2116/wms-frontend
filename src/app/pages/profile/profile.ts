@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FittrackAlert } from '../../utils/swal-custom';
 
 @Component({
   selector: 'app-profile',
@@ -99,5 +100,24 @@ export class ProfileComponent implements OnInit {
 
   volver() {
     this.router.navigate(['/dashboard']);
+  }
+
+  requestDeletion() {
+    FittrackAlert.fire({
+      title: '¿Eliminar Cuenta?',
+      text: '¿Deseas enviar una solicitud al administrador para borrar tu cuenta permanentemente? Cuéntanos por qué:',
+      input: 'textarea',
+      inputPlaceholder: 'Motivo...',
+      showCancelButton: true,
+      confirmButtonText: 'Enviar Solicitud',
+      confirmButtonColor: '#d33'
+    }).then((res) => {
+      if (res.isConfirmed && res.value) {
+        this.authService.requestAccountDeletion(res.value).subscribe({
+            next: (msg) => FittrackAlert.fire('Enviado', msg, 'success'),
+            error: (err) => FittrackAlert.fire('Error', err.error || 'Ya tienes una solicitud pendiente.', 'error')
+        });
+      }
+    });
   }
 }

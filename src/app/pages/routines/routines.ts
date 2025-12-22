@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RoutinesService, Rutina } from '../../services/routines/routines.service';
 import { RouterLink } from '@angular/router';
+import { FittrackAlert } from '../../utils/swal-custom';
 
 @Component({
   selector: 'app-routines',
@@ -139,23 +140,42 @@ export class RoutinesComponent implements OnInit {
   }
 
   deleteRoutine(id: number) {
-    if(confirm('¿Seguro que quieres borrar esta rutina? No podrás recuperarla.')) {
-        // 1. UI Optimista: Borrar visualmente antes de la respuesta del servidor
+    FittrackAlert.fire({
+      title: '¿Estás seguro?',
+      text: "Se eliminará la rutina y todo su contenido. No podrás deshacer esto.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, borrar rutina',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true // Pone el botón de cancelar a la izquierda (mejor UX)
+    }).then((result) => {
+      if (result.isConfirmed) {
+
+        // 1. UI Optimista (Borrar visualmente)
+        const backup = [...this.rutinas]; // Copia de seguridad por si falla
         this.rutinas = this.rutinas.filter(r => r.id !== id);
 
-        // Si estábamos viendo el detalle de la rutina borrada, volver a lista
         if (this.selectedRoutine?.id === id) {
-            this.goBackToList();
+          this.goBackToList();
         }
 
-        // 2. Petición al backend
+        // 2. Petición al Backend
         this.routinesService.deleteRoutine(id).subscribe({
-            error: () => {
-                alert('Error al eliminar. Recargando...');
-                this.loadRoutines(); // Rollback si falla
-            }
+          next: () => {
+             // Opcional: Alerta pequeña de éxito
+             const Toast = FittrackAlert.mixin({
+               toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+             });
+             Toast.fire({ icon: 'success', title: 'Rutina eliminada' });
+          },
+          error: () => {
+            // Rollback si falla
+            this.rutinas = backup;
+            FittrackAlert.fire('Error', 'No se pudo eliminar la rutina.', 'error');
+          }
         });
-    }
+      }
+    });
   }
 
   // --- LÓGICA INTERNA Y HELPERS ---

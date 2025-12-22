@@ -1,0 +1,83 @@
+// VARIABLES
+$primary-green: #1b4d3e;
+$light-bg: #f8f9fa;
+
+.admin-container {
+    min-height: 100vh;
+    background-color: $light-bg;
+}
+
+.mw-1000 {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.text-main-green { color: $primary-green !important; }
+.transition { transition: all 0.2s ease; }
+.cursor-pointer { cursor: pointer; }
+
+/* Animación */
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header Icon */
+.admin-icon {
+    width: 48px;
+    height: 48px;
+    background-color: #212529;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* AVATAR DE USUARIO */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    background-color: rgba($primary-green, 0.1);
+    color: $primary-green;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+/* TABLA PERSONALIZADA */
+.table {
+    margin-bottom: 0;
+
+    th {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    tr {
+        transition: background-color 0.2s;
+    }
+}
+
+/* TARJETAS DE SOLICITUD DE BAJA */
+.delete-req-card {
+    border-left: 4px solid #dc3545 !important; /* Borde rojo a la izquierda */
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: translateY(-3px);
+    }
+}
+
+/* Botones de acción en tabla */
+.btn-group .btn {
+    border-color: #dee2e6;
+    &:hover { background-color: #f8f9fa; }
+}

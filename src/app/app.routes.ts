@@ -6,6 +6,10 @@ import { ProfileComponent } from './pages/profile/profile';
 import { WeightTrackerComponent } from './pages/weight-tracker/weight-tracker';
 import { TrainingComponent } from './pages/training/training';
 import { RoutinesComponent } from './pages/routines/routines';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password';
+import { AdminDashboardComponent } from './pages/admin/admin-dashboard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -16,4 +20,12 @@ export const routes: Routes = [
     { path: 'weight', component: WeightTrackerComponent },
     { path: 'training', component: TrainingComponent },
     { path: 'routines', component: RoutinesComponent },
+    { path: 'forgot-password', component: ForgotPasswordComponent },
+    { path: 'reset-password', component: ResetPasswordComponent },
+
+    {
+      path: 'admin',
+      component: AdminDashboardComponent,
+      canActivate: [adminGuard]
+    }
 ];

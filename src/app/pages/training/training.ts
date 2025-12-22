@@ -4,6 +4,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { TrainingService, HistorialEntrenamiento } from '../../services/training/training.service';
 import { RoutinesService, Rutina, DiaRutina } from '../../services/routines/routines.service';
 import { RouterLink } from '@angular/router';
+import { FittrackAlert } from '../../utils/swal-custom';
 
 interface CalendarDay {
   date: Date;
@@ -119,21 +120,35 @@ export class TrainingComponent implements OnInit {
 
   // --- BORRAR ENTRENO ---
   deleteTraining(id: number) {
-    if(!confirm('¿Eliminar este registro de entrenamiento?')) return;
+    FittrackAlert.fire({
+      title: '¿Borrar registro?',
+      text: "Este entrenamiento desaparecerá de tu historial y estadísticas.",
+      icon: 'question', // Icono diferente, menos agresivo
+      showCancelButton: true,
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Mantener'
+    }).then((result) => {
+      if (result.isConfirmed) {
 
-    // 1. UI Optimista: Borrar de las listas locales
-    this.history = this.history.filter(h => h.id !== id);
-    this.selectedWorkouts = this.selectedWorkouts.filter(h => h.id !== id);
+        // Lógica de borrado (la misma que tenías)
+        this.history = this.history.filter(h => h.id !== id);
+        this.selectedWorkouts = this.selectedWorkouts.filter(h => h.id !== id);
+        this.generateCalendar();
 
-    // 2. Regenerar calendario (para que desaparezca el puntito verde si era el único entreno)
-    this.generateCalendar();
-
-    // 3. Llamada al Backend
-    this.trainingService.deleteWorkout(id).subscribe({
-        error: () => {
-            alert('Error al eliminar');
-            this.loadHistory(); // Rollback
-        }
+        this.trainingService.deleteWorkout(id).subscribe({
+            next: () => {
+                // Feedback sutil
+                const Toast = FittrackAlert.mixin({
+                   toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000
+                });
+                Toast.fire({ icon: 'success', title: 'Registro eliminado' });
+            },
+            error: () => {
+                FittrackAlert.fire('Error', 'No se pudo eliminar.', 'error');
+                this.loadHistory(); // Rollback
+            }
+        });
+      }
     });
   }
 

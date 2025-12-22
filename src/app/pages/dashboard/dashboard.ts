@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core'; // <--- Agregar OnInit
+import { Component, inject, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth/auth';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -14,8 +14,9 @@ export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  usuario: any = null; // Aquí guardaremos los datos
+  usuario: any = null;
   isLoading = true;
+  isAdmin = false; // Variable para controlar la visibilidad del botón
 
   ngOnInit() {
     this.fetchUserData();
@@ -26,12 +27,16 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         console.log('Datos del usuario:', data);
         this.usuario = data;
+
+        // VERIFICACIÓN DE ROL:
+        // Si el backend devuelve el campo 'role', lo usamos.
+        this.isAdmin = this.usuario.role === 'ADMIN';
+
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error al cargar perfil:', err);
         this.isLoading = false;
-        // Si el token expiró, lo mandamos al login
         if (err.status === 403) {
           this.logout();
         }

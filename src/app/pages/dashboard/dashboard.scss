@@ -68,9 +68,9 @@ $light-bg: #f8f9fa;
 }
 
 /* Colores personalizados para macros */
-.text-success { color: #198754 !important; } /* Proteína */
-.text-warning { color: #d4a017 !important; } /* Carbohidratos (Dorado oscuro) */
-.text-danger { color: #dc3545 !important; } /* Grasas */
+.text-success { color: #198754 !important; }
+.text-warning { color: #d4a017 !important; }
+.text-danger { color: #dc3545 !important; }
 .bg-success { background-color: #198754 !important; }
 .bg-warning { background-color: #d4a017 !important; }
 .bg-danger { background-color: #dc3545 !important; }
@@ -87,8 +87,8 @@ $light-bg: #f8f9fa;
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
 
-        /* Al hacer hover, el icono se vuelve verde */
-        .icon-box {
+        /* Solo aplicamos el efecto verde si NO es la tarjeta Admin (que ya es oscura) */
+        &:not(.bg-dark) .icon-box {
             background-color: $primary-green;
             color: white;
         }
@@ -100,11 +100,17 @@ $light-bg: #f8f9fa;
     width: 45px;
     height: 45px;
     border-radius: 12px;
-    background-color: rgba($primary-green, 0.08); /* Fondo verde muy claro */
+    background-color: rgba($primary-green, 0.08);
     color: $primary-green;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
     transition: all 0.2s ease;
+}
+
+/* --- NUEVO: Estilo para el icono dentro de la tarjeta oscura (Admin) --- */
+.bg-white-20 {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
 }

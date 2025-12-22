@@ -16,17 +16,24 @@
                     <label class="form-label small fw-bold text-muted ps-1">CORREO ELECTRÓNICO</label>
                     <input type="email"
                            class="form-control form-control-lg"
-                           formControlName="email"> </div>
+                           formControlName="email">
+                </div>
 
-                <div class="mb-4">
-                    <label class="form-label small fw-bold text-muted ps-1">CONTRASEÑA</label>
+                <div class="mb-2"> <label class="form-label small fw-bold text-muted ps-1">CONTRASEÑA</label>
                     <div class="input-group">
                         <input [type]="showPassword ? 'text' : 'password'"
                                class="form-control form-control-lg border-end-0"
-                               formControlName="password"> <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" (click)="togglePassword()">
+                               formControlName="password">
+                        <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" (click)="togglePassword()">
                             <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
                         </span>
                     </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-4">
+                    <a routerLink="/forgot-password" class="small text-muted text-decoration-none fw-bold link-hover">
+                        ¿Olvidaste tu contraseña?
+                    </a>
                 </div>
 
                 <div *ngIf="errorMessage" class="alert alert-danger py-2 small text-center rounded-3 mb-4">

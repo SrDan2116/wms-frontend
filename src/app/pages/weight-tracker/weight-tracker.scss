@@ -1,0 +1,76 @@
+// VARIABLES
+$primary-green: #1b4d3e;
+$light-bg: #f8f9fa;
+
+.weight-container {
+    min-height: 100vh;
+    background-color: $light-bg;
+}
+
+.mw-800 {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.ls-1 { letter-spacing: 1px; }
+.text-main-green { color: $primary-green !important; }
+
+/* ANIMACIÓN */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* TARJETAS DE KPIs */
+.kpi-card {
+    border-radius: 16px;
+    background-color: #ffffff;
+    transition: transform 0.2s;
+    &:hover { transform: translateY(-3px); }
+}
+
+.icon-box-sm {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+/* GRÁFICO */
+.chart-card {
+    border-radius: 16px;
+}
+
+/* FORMULARIO (ESTILO PREMIUM VERDE) */
+.main-card {
+    background: linear-gradient(135deg, $primary-green, darken($primary-green, 5%));
+    border-radius: 20px;
+}
+
+/* Inputs transparentes en el form verde */
+.bg-white-20 {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    &::placeholder { color: rgba(255,255,255,0.6); }
+    &:focus {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        box-shadow: none;
+    }
+}
+
+/* Input blanco sólido para el peso (para destacar) */
+.form-control-lg {
+    border-radius: 12px;
+}
+
+/* Date picker icon hack para que se vea blanco */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}

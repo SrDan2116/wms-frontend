@@ -1,0 +1,95 @@
+// VARIABLES
+$primary-green: #1b4d3e;
+$light-bg: #f8f9fa;
+
+.training-container {
+    background-color: $light-bg;
+    min-height: 100vh;
+}
+
+.text-main-green { color: $primary-green !important; }
+.ls-1 { letter-spacing: 1px; }
+.cursor-pointer { cursor: pointer; }
+.transition { transition: all 0.2s; }
+
+/* ANIMACIÓN */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* BORDES */
+.border-dashed {
+    border: 2px dashed #dee2e6;
+    &:hover { border-color: #adb5bd; background-color: #e9ecef; }
+}
+
+/* ESTILO PREMIUM PARA "CARGAR RUTINA" */
+.card-load-routine {
+    background-color: rgba($primary-green, 0.06); /* Verde muy suave */
+    border: 1px solid rgba($primary-green, 0.1);
+    border-radius: 16px;
+
+    .form-select {
+        background-color: #ffffff;
+        border: 1px solid rgba($primary-green, 0.2);
+        color: $primary-green;
+        font-weight: 600;
+
+        &:focus {
+            box-shadow: 0 0 0 3px rgba($primary-green, 0.15);
+            border-color: $primary-green;
+        }
+    }
+}
+
+/* INPUTS GENERALES */
+.form-control:focus {
+    box-shadow: none;
+    border-color: $primary-green;
+}
+
+/* --- CALENDARIO --- */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.day-cell {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #495057;
+
+    &:hover { background-color: #e9ecef; }
+}
+
+.other-month { opacity: 0.3; }
+
+.day-cell.selected {
+    background-color: $primary-green;
+    color: white;
+    box-shadow: 0 4px 10px rgba($primary-green, 0.3);
+    .workout-dot { background-color: #4ade80 !important; }
+}
+
+.day-cell.today { border: 2px solid $primary-green; }
+
+.workout-dot {
+    width: 5px;
+    height: 5px;
+    background-color: $primary-green;
+    border-radius: 50%;
+    margin-top: 4px;
+}

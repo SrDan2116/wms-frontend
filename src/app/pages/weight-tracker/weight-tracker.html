@@ -1,0 +1,98 @@
+<div class="weight-container py-4 fade-in">
+    <div class="container mw-800">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold text-dark mb-0">Mi Progreso</h4>
+                <p class="text-muted small mb-0">Evolución corporal</p>
+            </div>
+            <a routerLink="/dashboard" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <div class="row mb-4 g-3">
+            <div class="col-6">
+                <div class="card border-0 shadow-sm p-3 h-100 kpi-card">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="icon-box-sm bg-success-subtle text-success">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+                        <small class="text-muted fw-bold ls-1" style="font-size: 0.7rem;">ACTUAL</small>
+                    </div>
+                    <h2 class="fw-bold mb-0 text-dark">{{ pesoActual }}<span class="fs-6 text-muted ms-1">kg</span></h2>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card border-0 shadow-sm p-3 h-100 kpi-card">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="icon-box-sm" [ngClass]="progresoTotal <= 0 ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning'">
+                            <i class="bi" [ngClass]="progresoTotal <= 0 ? 'bi-graph-down-arrow' : 'bi-graph-up-arrow'"></i>
+                        </div>
+                        <small class="text-muted fw-bold ls-1" style="font-size: 0.7rem;">CAMBIO</small>
+                    </div>
+                    <h2 class="fw-bold mb-0" [class.text-success]="progresoTotal <= 0" [class.text-danger]="progresoTotal > 0">
+                        {{ pesoActual > 0 ? (progresoTotal > 0 ? '+' : '') + (progresoTotal | number:'1.1-2') : '--' }}<span class="fs-6 text-muted ms-1">kg</span>
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4 chart-card bg-white">
+            <div class="card-body p-2 p-md-4">
+
+                <div *ngIf="isLoading" class="text-center py-5">
+                    <div class="spinner-border text-main-green" role="status"></div>
+                </div>
+
+                <div *ngIf="!isLoading && historial.length > 0">
+                    <apx-chart
+                        [series]="chartOptions.series!"
+                        [chart]="chartOptions.chart!"
+                        [xaxis]="chartOptions.xaxis!"
+                        [stroke]="chartOptions.stroke!"
+                        [tooltip]="chartOptions.tooltip!"
+                        [dataLabels]="chartOptions.dataLabels!"
+                        [fill]="chartOptions.fill!"
+                        [colors]="chartOptions.colors!"
+                        [yaxis]="chartOptions.yaxis!"
+                        [grid]="chartOptions.grid!"
+                    ></apx-chart>
+                </div>
+
+                <div *ngIf="!isLoading && historial.length === 0" class="text-center py-5">
+                    <i class="bi bi-bar-chart-line text-muted fs-1 opacity-25"></i>
+                    <p class="text-muted mt-2 small">Registra tu primer peso para ver la gráfica.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm main-card text-white overflow-hidden">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3 ls-1"><i class="bi bi-plus-circle me-2"></i>NUEVO REGISTRO</h6>
+
+                <form [formGroup]="form" (ngSubmit)="saveWeight()" class="row g-3 align-items-end">
+
+                    <div class="col-6 col-md-5">
+                        <label class="form-label small text-white-50 fw-bold">FECHA</label>
+                        <input type="date" class="form-control form-control-lg border-0 bg-white-20 text-white" formControlName="fecha">
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small text-white-50 fw-bold">PESO (KG)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" class="form-control form-control-lg border-0 bg-white text-dark fw-bold" formControlName="valor" placeholder="0.0">
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <button type="submit" class="btn btn-light w-100 btn-lg fw-bold text-main-green shadow-sm" [disabled]="form.invalid">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

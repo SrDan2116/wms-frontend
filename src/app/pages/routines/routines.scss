@@ -1,0 +1,69 @@
+// VARIABLES
+$primary-green: #1b4d3e;
+$light-bg: #f8f9fa;
+
+.routine-container {
+    min-height: 100vh;
+    background-color: $light-bg;
+}
+
+/* UTILIDADES DE TEXTO Y COLOR */
+.text-main-green {
+    color: $primary-green !important;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* ANIMACIONES */
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* TARJETAS DE RUTINA (EN LISTA) */
+.routine-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border-radius: 16px;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+        /* Opcional: un borde verde sutil al pasar el mouse para indicar acción */
+        border-color: rgba($primary-green, 0.3) !important;
+    }
+}
+
+/* BORDES PUNTEADOS (BOTONES DE AGREGAR) */
+.border-dashed {
+    border: 2px dashed #dee2e6;
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        color: $primary-green !important; /* Texto verde al hover */
+    }
+}
+
+/* INPUTS (ADAPTADOS AL TEMA VERDE) */
+.form-control {
+    &:focus {
+        box-shadow: 0 0 0 3px rgba($primary-green, 0.1); /* Anillo verde suave */
+        border-color: $primary-green;
+    }
+}
+
+/* Badge personalizado para los días en la lista */
+.badge.bg-light {
+    background-color: #f1f3f5 !important;
+    color: #495057 !important;
+}

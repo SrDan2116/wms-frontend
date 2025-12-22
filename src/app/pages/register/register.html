@@ -1,0 +1,68 @@
+<div class="register-container d-flex align-items-center justify-content-center">
+    <div class="card register-card border-0 shadow-lg">
+        <div class="card-body p-5">
+
+            <div class="text-center mb-5">
+                <div class="icon-circle mb-3 mx-auto">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Comienza tu viaje.</h4>
+                <p class="text-muted small">Crea tu perfil de atleta hoy mismo.</p>
+            </div>
+
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted ps-1">NOMBRE COMPLETO</label>
+                    <input type="text"
+                           class="form-control form-control-lg"
+                           formControlName="nombre">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted ps-1">CORREO ELECTRÓNICO</label>
+                    <input type="email"
+                           class="form-control form-control-lg"
+                           formControlName="email">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted ps-1">CONTRASEÑA</label>
+                    <div class="input-group">
+                        <input [type]="showPassword ? 'text' : 'password'"
+                               class="form-control form-control-lg border-end-0"
+                               formControlName="password">
+
+                        <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" (click)="togglePassword()">
+                            <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+                        </span>
+                    </div>
+                    <div *ngIf="form.get('password')?.touched && form.get('password')?.hasError('minlength')" class="form-text text-danger small mt-1">
+                        Mínimo 6 caracteres.
+                    </div>
+                </div>
+
+                <div *ngIf="errorMessage" class="alert alert-danger py-2 small text-center rounded-3 mb-4">
+                    {{ errorMessage }}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit"
+                            class="btn btn-primary btn-lg fw-bold"
+                            [disabled]="form.invalid || isLoading">
+                        {{ isLoading ? 'CREANDO CUENTA...' : 'CREAR CUENTA' }}
+                    </button>
+                </div>
+
+            </form>
+
+            <div class="text-center mt-4">
+                <p class="small text-muted mb-0">¿Ya eres parte del equipo?</p>
+                <a routerLink="/login" class="fw-bold text-decoration-none text-primary link-hover">
+                    Inicia sesión aquí
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>

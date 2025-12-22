@@ -1,0 +1,134 @@
+<div class="profile-container fade-in">
+    <div class="container py-5">
+
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h2 class="fw-bold mb-0 text-dark">Ajustes de Perfil ⚙️</h2>
+                <p class="text-muted small">Personaliza tus datos y objetivos.</p>
+            </div>
+            <button (click)="volver()" class="btn btn-outline-dark btn-sm">
+                &larr; Volver
+            </button>
+        </div>
+
+        <div *ngIf="successMessage" class="alert alert-success border-0 shadow-sm mb-4">
+            {{ successMessage }}
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+            <div class="row g-5">
+
+                <div class="col-lg-5">
+                    <h6 class="section-title">Mis Datos Físicos</h6>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" formControlName="nombre">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" class="form-control" formControlName="pesoActual">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Altura (cm)</label>
+                            <input type="number" class="form-control" formControlName="alturaCm">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Nacimiento</label>
+                        <input type="date" class="form-control" formControlName="fechaNacimiento">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Género</label>
+                        <select class="form-select" formControlName="genero">
+                            <option value="MASCULINO">Masculino</option>
+                            <option value="FEMENINO">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-4">
+                        <h6 class="section-title mb-0" style="border: none;">Estrategia Nutricional</h6>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="manualMode" formControlName="esManual">
+                            <label class="form-check-label small fw-bold" for="manualMode">
+                                {{ profileForm.get('esManual')?.value ? 'Modo Manual (Experto)' : 'Modo Automático' }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div [class.opacity-50]="profileForm.get('esManual')?.value">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Objetivo</label>
+                                <select class="form-select" formControlName="objetivo">
+                                    <option value="PERDER_GRASA">Perder Grasa</option>
+                                    <option value="GANAR_MASA">Ganar Masa</option>
+                                    <option value="RECOMPOSICION_CORPORAL">Recomposición</option>
+                                    <option value="MANTENER">Mantener</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Intensidad</label>
+                                <select class="form-select" formControlName="intensidadObjetivo">
+                                    <option value="LENTO">Lento</option>
+                                    <option value="NORMAL">Normal</option>
+                                    <option value="AGRESIVO">Agresivo</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Nivel de Actividad</label>
+                                <select class="form-select" formControlName="nivelActividad">
+                                    <option value="SEDENTARIO">Sedentario</option>
+                                    <option value="LIGERO">Ligero</option>
+                                    <option value="MODERADO">Moderado</option>
+                                    <option value="ACTIVO">Activo</option>
+                                    <option value="MUY_ACTIVO">Muy Activo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="manual-section p-4 rounded-3 mt-4"
+                         [class.active]="profileForm.get('esManual')?.value"
+                         [class.disabled-look]="!profileForm.get('esManual')?.value">
+
+                        <h6 class="small text-muted mb-3 fw-bold">MACROS (EDITABLE EN MODO MANUAL)</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Calorías Totales</label>
+                                <input type="number" class="form-control fw-bold" formControlName="caloriasObjetivo">
+                            </div>
+                            <div class="col-md-6"></div> <div class="col-4 mb-3">
+                                <label class="form-label text-primary">Proteína (g)</label>
+                                <input type="number" class="form-control" formControlName="proteinasObjetivo">
+                            </div>
+                            <div class="col-4 mb-3">
+                                <label class="form-label text-warning">Carbos (g)</label>
+                                <input type="number" class="form-control" formControlName="carbohidratosObjetivo">
+                            </div>
+                            <div class="col-4 mb-3">
+                                <label class="form-label text-danger">Grasas (g)</label>
+                                <input type="number" class="form-control" formControlName="grasasObjetivo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn btn-dark px-5 py-2 fw-bold">
+                            Guardar Cambios
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

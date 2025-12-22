@@ -1,0 +1,110 @@
+// VARIABLE DE COLOR (Verde Bosque)
+$primary-green: #1b4d3e;
+$light-bg: #f8f9fa;
+
+.dashboard-container {
+    min-height: 100vh;
+    background-color: $light-bg;
+}
+
+/* Animación de entrada */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* TEXTOS Y COLORES */
+.text-main-green {
+    color: $primary-green !important;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+/* NAVBAR ICON */
+.icon-circle-small {
+    width: 32px;
+    height: 32px;
+    background-color: rgba($primary-green, 0.1);
+    color: $primary-green;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* PROFILE ICON */
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    background-color: $primary-green;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+/* --- TARJETAS DE MACROS --- */
+.macro-card {
+    border-radius: 16px;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.macro-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* Colores personalizados para macros */
+.text-success { color: #198754 !important; } /* Proteína */
+.text-warning { color: #d4a017 !important; } /* Carbohidratos (Dorado oscuro) */
+.text-danger { color: #dc3545 !important; } /* Grasas */
+.bg-success { background-color: #198754 !important; }
+.bg-warning { background-color: #d4a017 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+
+
+/* --- TARJETAS DE ACCIÓN (Action Cards) --- */
+.action-card {
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+
+        /* Al hacer hover, el icono se vuelve verde */
+        .icon-box {
+            background-color: $primary-green;
+            color: white;
+        }
+    }
+}
+
+/* CAJA DE ICONOS EN CARDS */
+.icon-box {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background-color: rgba($primary-green, 0.08); /* Fondo verde muy claro */
+    color: $primary-green;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+}

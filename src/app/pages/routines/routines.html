@@ -1,0 +1,178 @@
+<div class="container py-4 routine-container fade-in">
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark">Mis Rutinas</h2>
+            <p class="text-muted small">Diseña tu plan de entrenamiento</p>
+        </div>
+
+        <div>
+            <div *ngIf="viewMode === 'LIST'">
+                <a routerLink="/dashboard" class="btn btn-outline-dark btn-sm rounded-pill me-2">Volver</a>
+                <button class="btn btn-dark btn-sm rounded-pill fw-bold" (click)="viewMode = 'CREATE'; resetForm()">
+                    + Nueva Rutina
+                </button>
+            </div>
+
+            <button *ngIf="viewMode === 'CREATE'" class="btn btn-outline-danger btn-sm rounded-pill" (click)="goBackToList()">
+                Cancelar
+            </button>
+
+            <button *ngIf="viewMode === 'DETAILS'" class="btn btn-outline-dark btn-sm rounded-pill" (click)="goBackToList()">
+                &larr; Volver
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="viewMode === 'LIST'" class="fade-in">
+
+        <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-main-green" role="status"></div>
+        </div>
+
+        <div *ngIf="!isLoading && rutinas.length === 0" class="text-center py-5 bg-white rounded-4 shadow-sm">
+            <i class="bi bi-clipboard-x fs-1 text-muted opacity-25"></i>
+            <p class="text-muted mt-2">No tienes rutinas creadas.</p>
+            <button class="btn btn-dark btn-sm rounded-pill mt-2" (click)="viewMode = 'CREATE'">Crear la primera</button>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4" *ngFor="let rutina of rutinas">
+                <div class="card h-100 border-0 shadow-sm routine-card cursor-pointer" (click)="viewRoutine(rutina)">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold text-dark mb-0">{{ rutina.nombre }}</h5>
+                            <i class="bi bi-chevron-right text-muted small"></i>
+                        </div>
+                        <p class="text-muted small mb-3 fst-italic text-truncate">{{ rutina.descripcion || 'Sin descripción' }}</p>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span *ngFor="let dia of rutina.dias" class="badge bg-light text-dark border fw-normal">
+                                {{ dia.nombre }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="viewMode === 'DETAILS' && selectedRoutine" class="fade-in">
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-4">
+                    <div>
+                        <h2 class="fw-bold text-main-green mb-1">{{ selectedRoutine.nombre }}</h2>
+                        <p class="text-muted fst-italic mb-0">{{ selectedRoutine.descripcion || 'Sin descripción adicional' }}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-dark btn-sm" (click)="startEdit()">
+                            <i class="bi bi-pencil-square me-1"></i> Editar
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" (click)="deleteRoutine(selectedRoutine.id!)">
+                            <i class="bi bi-trash me-1"></i> Borrar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6" *ngFor="let dia of selectedRoutine.dias; let i = index">
+                        <div class="card h-100 border bg-light">
+                            <div class="card-header bg-dark text-white fw-bold py-2">
+                                {{ dia.nombre }}
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let ej of dia.ejercicios">
+                                    <div>
+                                        <span class="fw-bold d-block">{{ ej.nombre }}</span>
+                                        <small class="text-muted fst-italic" *ngIf="ej.notas">{{ ej.notas }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-white text-dark border">{{ ej.seriesObjetivo }} series</span>
+                                        <span class="badge bg-white text-dark border ms-1">{{ ej.repeticionesObjetivo }} reps</span>
+                                    </div>
+                                </li>
+                                <li *ngIf="dia.ejercicios.length === 0" class="list-group-item text-muted small text-center py-3">
+                                    Sin ejercicios planificados
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="viewMode === 'CREATE'" class="fade-in pb-5">
+        <form [formGroup]="routineForm" (ngSubmit)="saveRoutine()">
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3 text-muted ls-1">INFORMACIÓN GENERAL</h6>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">NOMBRE</label>
+                        <input type="text" class="form-control form-control-lg fw-bold" formControlName="nombre" placeholder="Ej: Upper / Lower">
+                    </div>
+                    <div>
+                        <label class="form-label small fw-bold text-muted">DESCRIPCIÓN</label>
+                        <input type="text" class="form-control" formControlName="descripcion" placeholder="Enfoque en fuerza...">
+                    </div>
+                </div>
+            </div>
+
+            <div formArrayName="dias">
+                <div *ngFor="let dia of diasControls.controls; let i = index" [formGroupName]="i" class="card border-0 shadow-sm mb-4 overflow-hidden">
+
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2 px-3">
+                        <div class="d-flex align-items-center gap-2 w-75">
+                            <span class="badge bg-white text-dark">{{ i + 1 }}</span>
+                            <input type="text" class="form-control form-control-sm bg-dark text-white border-0 fw-bold shadow-none" formControlName="nombre" placeholder="Nombre del Día">
+                        </div>
+                        <button type="button" class="btn btn-sm text-white-50" (click)="removeDia(i)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+
+                    <div class="card-body bg-light">
+                        <h6 class="small fw-bold text-muted mb-3">EJERCICIOS</h6>
+                        <div formArrayName="ejercicios">
+                            <div *ngFor="let ej of getEjerciciosControls(i).controls; let j = index" [formGroupName]="j" class="row g-2 mb-2 align-items-center bg-white p-2 rounded border mx-0">
+                                <div class="col-md-5 col-12">
+                                    <input type="text" class="form-control form-control-sm fw-bold border-0 shadow-none" formControlName="nombre" placeholder="Nombre Ejercicio">
+                                </div>
+                                <div class="col-md-2 col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text border-0 bg-transparent text-muted px-1">Sets</span>
+                                        <input type="number" class="form-control text-center bg-light border-0" formControlName="seriesObjetivo">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text border-0 bg-transparent text-muted px-1">Reps</span>
+                                        <input type="text" class="form-control text-center bg-light border-0" formControlName="repeticionesObjetivo" placeholder="10-12">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-2 text-end">
+                                    <i class="bi bi-x-circle text-danger" style="cursor: pointer;" (click)="removeEjercicio(i, j)"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light w-100 mt-2 text-muted fw-bold border-dashed" (click)="addEjercicio(i)">+ Agregar Ejercicio</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-outline-dark w-100 py-3 mb-5 fw-bold border-dashed" (click)="addDia()">
+                + AGREGAR OTRO DÍA
+            </button>
+
+            <div class="fixed-bottom p-3 bg-white border-top shadow-lg d-flex justify-content-center">
+                <button type="submit" [disabled]="routineForm.invalid || isLoading" class="btn btn-dark w-100 rounded-pill py-3 fw-bold" style="max-width: 500px;">
+                    {{ isLoading ? 'Guardando...' : 'GUARDAR CAMBIOS' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

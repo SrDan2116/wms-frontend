@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TrainingService, HistorialEntrenamiento } from '../../services/training/training.service';
@@ -17,10 +17,10 @@ interface CalendarDay {
   selector: 'app-training',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './training.html', // Asegúrate de que coincida con tu archivo
-  styleUrl: './training.scss'      // Asegúrate de que coincida con tu archivo
+  templateUrl: './training.html',
+  styleUrl: './training.scss'
 })
-export class TrainingComponent implements OnInit {
+export class TrainingComponent implements OnInit, OnDestroy {
   private trainingService = inject(TrainingService);
   private routinesService = inject(RoutinesService);
   private fb = inject(FormBuilder);
@@ -40,26 +40,125 @@ export class TrainingComponent implements OnInit {
   rutinaSeleccionada: Rutina | null = null;
   diasDisponibles: DiaRutina[] = [];
 
-  // FORMULARIO (Con Fecha Editable)
+  // FORMULARIO
   workoutForm: FormGroup = this.fb.group({
     nombreRutina: ['', Validators.required],
     notasGenerales: [''],
-    // Inicializamos con fecha de hoy en formato YYYY-MM-DD para el input type="date"
     fechaHora: [new Date().toISOString().split('T')[0], Validators.required],
     ejercicios: this.fb.array([])
   });
 
+  // --- VARIABLES TEMPORIZADOR & KEEP-ALIVE ---
+  pingInterval: any;      // Intervalo de seguridad (10 min)
+  timerInterval: any;     // Intervalo del cronómetro (1 seg)
+
+  restTime = 90;          // Tiempo de descanso por defecto (segundos)
+  timeLeft = 0;           // Tiempo restante actual
+  isTimerRunning = false; // Estado del timer visual
+
+  // =========================================================
+  // CICLO DE VIDA
+  // =========================================================
+
   ngOnInit() {
-    // 1. Generamos la estructura del calendario INMEDIATAMENTE
     this.generateCalendar();
-
-    // 2. Seleccionamos el día de hoy visualmente
     if (!this.selectedDate) this.selectDate(new Date());
-
-    // 3. Cargamos los datos del servidor
     this.loadHistory();
     this.loadMyRoutines();
+
+    // 1. PING AUTOMÁTICO DE SEGURIDAD (Cada 10 minutos)
+    // Esto evita que Render se duerma si el usuario tarda mucho pensando
+    this.pingInterval = setInterval(() => {
+        this.sendPing();
+    }, 600000); // 10 min = 600,000 ms
   }
+
+  ngOnDestroy() {
+    // Limpieza vital para no dejar procesos zombies
+    if (this.pingInterval) clearInterval(this.pingInterval);
+    if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
+  // =========================================================
+  // LÓGICA KEEP-ALIVE & TEMPORIZADOR
+  // =========================================================
+
+  sendPing() {
+      // Llama al endpoint ligero que creamos en el backend
+      // Asumimos que agregaste keepAlive() a tu TrainingService o usas http directo
+      // Si no lo tienes en el servicio, usa this.http.get(...)
+      console.log('Manteniendo servidor despierto... 💓');
+      this.trainingService.keepAlive().subscribe();
+  }
+
+  // Iniciar descanso (Botón del relojito)
+  startRest(seconds: number = 120) {
+      this.stopRest();
+      this.restTime = seconds;
+      this.timeLeft = seconds;
+      this.isTimerRunning = true;
+
+      // Al iniciar descanso, enviamos un ping (acción de usuario)
+      this.sendPing();
+
+      this.timerInterval = setInterval(() => {
+          if (this.timeLeft > 0) {
+              this.timeLeft--;
+          } else {
+              this.stopRest();
+              // Opcional: Sonido
+              this.playAlarm();
+          }
+      }, 1000);
+  }
+
+  stopRest() {
+      this.isTimerRunning = false;
+      if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
+  addTime(seconds: number) {
+      this.timeLeft += seconds;
+  }
+
+  formatTime(seconds: number): string {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  playAlarm() {
+      // Sonido simple del sistema (si el navegador lo permite) o nada
+      try {
+          const audio = new Audio('assets/sounds/beep.mp3');
+          audio.play();
+      } catch (e) { console.log('Audio no disponible'); }
+  }
+
+  // =========================================================
+  // LÓGICA DE FORMULARIO MEJORADA (Checks)
+  // =========================================================
+
+  // Helper para saber si un ejercicio está marcado como "Completado"
+  // Usamos un FormControl extra 'completed' en el grupo
+  isExerciseCompleted(index: number): boolean {
+      return this.ejerciciosControls.at(index).get('completed')?.value;
+  }
+
+  toggleExerciseCompletion(index: number) {
+      const control = this.ejerciciosControls.at(index).get('completed');
+      if (control) {
+          const newVal = !control.value;
+          control.setValue(newVal);
+
+          // Si marcó como completado, enviamos ping para asegurar
+          if (newVal) this.sendPing();
+      }
+  }
+
+  // =========================================================
+  // LÓGICA DE CARGA DE DATOS (Igual que antes)
+  // =========================================================
 
   loadMyRoutines() {
     this.routinesService.getMyRoutines().subscribe({ next: (data) => this.misRutinas = data });
@@ -70,14 +169,12 @@ export class TrainingComponent implements OnInit {
     this.trainingService.getHistory().subscribe({
       next: (data) => {
         this.history = data;
-        // Regeneramos el calendario para pintar los puntitos verdes con la data fresca
         this.generateCalendar();
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error al cargar historial', err);
         this.isLoading = false;
-        // El calendario sigue visible gracias a la llamada en ngOnInit
       }
     });
   }
@@ -92,12 +189,10 @@ export class TrainingComponent implements OnInit {
 
     this.calendarDays = [];
 
-    // Padding anterior
     for (let i = 0; i < startingDayOfWeek; i++) {
         this.calendarDays.unshift({ date: new Date(year, month, -i), isCurrentMonth: false, hasWorkout: false, isToday: false });
     }
 
-    // Días del mes
     for (let i = 1; i <= lastDay.getDate(); i++) {
         const date = new Date(year, month, i);
         const hasWorkout = this.checkIfHasWorkout(date);
@@ -122,37 +217,31 @@ export class TrainingComponent implements OnInit {
   deleteTraining(id: number) {
     FittrackAlert.fire({
       title: '¿Borrar registro?',
-      text: "Este entrenamiento desaparecerá de tu historial y estadísticas.",
-      icon: 'question', // Icono diferente, menos agresivo
+      text: "Este entrenamiento desaparecerá de tu historial.",
+      icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, borrar',
       cancelButtonText: 'Mantener'
     }).then((result) => {
       if (result.isConfirmed) {
-
-        // Lógica de borrado (la misma que tenías)
         this.history = this.history.filter(h => h.id !== id);
         this.selectedWorkouts = this.selectedWorkouts.filter(h => h.id !== id);
         this.generateCalendar();
 
         this.trainingService.deleteWorkout(id).subscribe({
             next: () => {
-                // Feedback sutil
-                const Toast = FittrackAlert.mixin({
-                   toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000
-                });
+                const Toast = FittrackAlert.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000 });
                 Toast.fire({ icon: 'success', title: 'Registro eliminado' });
             },
             error: () => {
                 FittrackAlert.fire('Error', 'No se pudo eliminar.', 'error');
-                this.loadHistory(); // Rollback
+                this.loadHistory();
             }
         });
       }
     });
   }
 
-  // --- HELPERS FECHA ---
   private isSameDate(d1: Date, d2: Date): boolean {
     return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
   }
@@ -162,7 +251,6 @@ export class TrainingComponent implements OnInit {
 
   switchTab(tab: 'HISTORY' | 'NEW') {
     this.activeTab = tab;
-    // Solo recargamos si no hay datos, para ahorrar peticiones
     if (tab === 'HISTORY' && this.history.length === 0) this.loadHistory();
   }
 
@@ -188,6 +276,7 @@ export class TrainingComponent implements OnInit {
     diaPlan.ejercicios.forEach(plan => {
         const ejercicioGroup = this.fb.group({
             nombre: [plan.nombre, Validators.required],
+            completed: [false], // NUEVO: Estado de completado
             series: this.fb.array([])
         });
         for (let i = 0; i < plan.seriesObjetivo; i++) {
@@ -202,10 +291,15 @@ export class TrainingComponent implements OnInit {
   getSeriesControls(index: number) { return (this.ejerciciosControls.at(index).get('series') as FormArray); }
 
   addEjercicio() {
-    const g = this.fb.group({ nombre: ['', Validators.required], series: this.fb.array([]) });
+    const g = this.fb.group({
+        nombre: ['', Validators.required],
+        completed: [false], // NUEVO
+        series: this.fb.array([])
+    });
     (g.get('series') as FormArray).push(this.createSerieGroup());
     this.ejerciciosControls.push(g);
   }
+
   removeEjercicio(i: number) { this.ejerciciosControls.removeAt(i); }
 
   addSerie(i: number) {
@@ -215,6 +309,7 @@ export class TrainingComponent implements OnInit {
     if (last) s.patchValue({ peso: last.peso, repeticiones: last.repeticiones });
     series.push(s);
   }
+
   removeSerie(i: number, j: number) { this.getSeriesControls(i).removeAt(j); }
 
   createSerieGroup(meta: string = '-'): FormGroup {
@@ -229,36 +324,33 @@ export class TrainingComponent implements OnInit {
     if (this.workoutForm.invalid) return;
     this.isLoading = true;
 
-    // 1. Obtenemos los valores del formulario
     const formValue = this.workoutForm.value;
+    // Eliminamos el campo 'completed' antes de enviar, ya que el backend no lo espera en el Historial
+    // (O si quieres guardarlo, déjalo, pero asegúrate que el DTO lo acepte)
+    const ejerciciosLimpios = formValue.ejercicios.map((ej: any) => {
+        const { completed, ...resto } = ej; // Destructuring para quitar 'completed'
+        return resto;
+    });
 
-    // 2. ARREGLO DE FECHA: Convertimos "YYYY-MM-DD" a "YYYY-MM-DDTHH:mm:ss"
-    // Tomamos la fecha del input y le pegamos la hora actual
-    const fechaInput = formValue.fechaHora; // "2025-12-22"
-    const horaActual = new Date().toTimeString().split(' ')[0]; // "14:35:12"
-    const fechaCompleta = `${fechaInput}T${horaActual}`; // "2025-12-22T14:35:12"
+    const fechaInput = formValue.fechaHora;
+    const horaActual = new Date().toTimeString().split(' ')[0];
+    const fechaCompleta = `${fechaInput}T${horaActual}`;
 
-    // Creamos el objeto final para enviar
     const payload = {
         ...formValue,
+        ejercicios: ejerciciosLimpios,
         fechaHora: fechaCompleta
     };
 
-    // 3. Enviamos el payload corregido
     this.trainingService.saveWorkout(payload).subscribe({
       next: (nuevo) => {
         this.history.unshift(nuevo);
         this.generateCalendar();
 
-        // Ir visualmente a la fecha que acabamos de guardar
-        // Ojo: usamos fechaInput (YYYY-MM-DD) para el calendario, que lo entiende bien
-        // pero necesitamos convertirlo a Date
         const partesFecha = fechaInput.split('-');
-        // Mes en JS es 0-indexado (Enero = 0)
-        const fechaParaCalendario = new Date(partesFecha[0], partesFecha[1] - 1, partesFecha[2]);
+        const fechaParaCalendario = new Date(Number(partesFecha[0]), Number(partesFecha[1]) - 1, Number(partesFecha[2]));
         this.selectDate(fechaParaCalendario);
 
-        // Limpieza y reset
         this.workoutForm.reset({
             fechaHora: new Date().toISOString().split('T')[0],
             nombreRutina: '', notasGenerales: ''

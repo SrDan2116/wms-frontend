@@ -27,6 +27,7 @@ export interface HistorialEntrenamiento {
 export class TrainingService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/historial`;
+  private pingUrl = `${environment.apiUrl}/usuario/ping`;
 
   constructor() { }
 
@@ -41,5 +42,9 @@ export class TrainingService {
   // --- AGREGAR ESTE MÉTODO ---
   deleteWorkout(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  keepAlive(): Observable<any> {
+    return this.http.get(this.pingUrl, { responseType: 'text' });
   }
 }

@@ -15,19 +15,42 @@
                 <span class="fw-bold text-dark small">{{ usuario?.nombre }}</span>
             </div>
 
-            <div class="profile-icon rounded-circle d-flex align-items-center justify-content-center"
-                 routerLink="/profile">
-                <i class="bi bi-person-fill"></i>
-            </div>
+            <ng-container *ngIf="isAdmin">
+                <div class="profile-icon rounded-circle d-flex align-items-center justify-content-center position-relative"
+                     (click)="goToAdmin('USERS')"
+                     title="Panel de Administración">
+                    <i class="bi bi-shield-lock-fill"></i>
 
-            <button (click)="logout()" class="btn btn-link text-muted p-0 ms-2">
+                    <span *ngIf="adminNotificationCount > 0"
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
+                        {{ adminNotificationCount }}
+                    </span>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="!isAdmin">
+                <div class="notification-icon rounded-circle d-flex align-items-center justify-content-center"
+                     (click)="toggleChat()"
+                     [class.active]="isChatOpen"
+                     title="Soporte">
+                    <i class="bi bi-robot"></i>
+                </div>
+
+                <div class="profile-icon rounded-circle d-flex align-items-center justify-content-center"
+                     routerLink="/profile"
+                     title="Mi Perfil">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+            </ng-container>
+
+            <button (click)="logout()" class="btn btn-link text-muted p-0 ms-2" title="Cerrar Sesión">
                 <i class="bi bi-box-arrow-right fs-5"></i>
             </button>
         </div>
     </div>
 </nav>
 
-<div class="dashboard-container fade-in">
+<div class="dashboard-container fade-in position-relative">
 
     <div class="container py-5 text-center" *ngIf="isLoading">
         <div class="spinner-border text-main-green" role="status"></div>
@@ -61,7 +84,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-md-4">
                 <div class="card h-100 border-0 shadow-sm macro-card">
                     <div class="card-body p-4">
@@ -76,7 +98,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-md-4">
                 <div class="card h-100 border-0 shadow-sm macro-card">
                     <div class="card-body p-4">
@@ -96,78 +117,96 @@
         <h6 class="fw-bold text-muted small ls-1 mb-3">ACCESOS RÁPIDOS</h6>
 
         <div class="row g-3">
-
-            <div class="col-md-6 col-lg-3" *ngIf="isAdmin">
-                <div class="card action-card border-0 shadow-sm h-100 bg-dark text-white" routerLink="/admin">
-                    <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="icon-box mb-3 bg-white-20 text-white">
-                            <i class="bi bi-shield-lock-fill"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Panel Admin</h6>
-                            <p class="text-white-50 small mb-0">Gestionar usuarios</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="col-md-6 col-lg-3">
                 <div class="card action-card border-0 shadow-sm h-100" routerLink="/weight">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="icon-box mb-3">
-                            <i class="bi bi-graph-up-arrow"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Peso Corporal</h6>
-                            <p class="text-muted small mb-0">Registrar progreso</p>
-                        </div>
+                        <div class="icon-box mb-3"><i class="bi bi-graph-up-arrow"></i></div>
+                        <div><h6 class="fw-bold mb-1 text-dark">Peso Corporal</h6><p class="text-muted small mb-0">Registrar progreso</p></div>
                     </div>
                 </div>
             </div>
-
             <div class="col-md-6 col-lg-3">
                 <div class="card action-card border-0 shadow-sm h-100" routerLink="/routines">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="icon-box mb-3">
-                            <i class="bi bi-clipboard-data"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Mis Rutinas</h6>
-                            <p class="text-muted small mb-0">Planificar semana</p>
-                        </div>
+                        <div class="icon-box mb-3"><i class="bi bi-clipboard-data"></i></div>
+                        <div><h6 class="fw-bold mb-1 text-dark">Mis Rutinas</h6><p class="text-muted small mb-0">Planificar semana</p></div>
                     </div>
                 </div>
             </div>
-
             <div class="col-md-6 col-lg-3">
                 <div class="card action-card border-0 shadow-sm h-100" routerLink="/training">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="icon-box mb-3">
-                            <i class="bi bi-journal-check"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Entrenar Hoy</h6>
-                            <p class="text-muted small mb-0">Registrar sesión</p>
-                        </div>
+                        <div class="icon-box mb-3"><i class="bi bi-journal-check"></i></div>
+                        <div><h6 class="fw-bold mb-1 text-dark">Entrenar Hoy</h6><p class="text-muted small mb-0">Registrar sesión</p></div>
                     </div>
                 </div>
             </div>
-
             <div class="col-md-6 col-lg-3">
                 <div class="card action-card border-0 shadow-sm h-100" routerLink="/profile">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="icon-box mb-3">
-                            <i class="bi bi-person-lines-fill"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Mi Perfil</h6>
-                            <p class="text-muted small mb-0">Ajustar datos</p>
-                        </div>
+                        <div class="icon-box mb-3"><i class="bi bi-person-lines-fill"></i></div>
+                        <div><h6 class="fw-bold mb-1 text-dark">Mi Perfil</h6><p class="text-muted small mb-0">Ajustar datos</p></div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <div class="chat-widget shadow-lg" [class.open]="isChatOpen && !isAdmin">
+
+        <div class="chat-header p-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <div class="icon-circle-small bg-white text-main-green" style="width: 30px; height: 30px;">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <span class="fw-bold text-white small">Soporte FitTrack</span>
+            </div>
+            <button class="btn btn-link text-white p-0" (click)="toggleChat()">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
 
+        <div class="chat-body p-3">
+            <div class="d-flex gap-2 mb-3">
+                <div class="chat-avatar"><i class="bi bi-robot"></i></div>
+                <div class="chat-bubble bot">
+                    Hola {{ usuario?.nombre }}, soy tu asistente. ¿En qué puedo ayudarte hoy?
+                </div>
+            </div>
+
+            <div *ngIf="chatStep === 'MENU'" class="text-end fade-in">
+                <button class="btn btn-sm btn-outline-danger rounded-pill mb-2" (click)="selectOption('DELETE_ACCOUNT')">
+                    Quiero eliminar mi cuenta
+                </button>
+            </div>
+
+            <div *ngIf="chatStep === 'REASON'" class="fade-in">
+                <div class="d-flex gap-2 mb-3 justify-content-end">
+                    <div class="chat-bubble user bg-danger text-white">Quiero eliminar mi cuenta.</div>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="chat-avatar"><i class="bi bi-robot"></i></div>
+                    <div class="chat-bubble bot">Lamentamos que te vayas. Por favor, escribe el motivo.</div>
+                </div>
+                <textarea [(ngModel)]="deletionReason" class="form-control mb-2 text-small" rows="3" placeholder="Motivo..."></textarea>
+                <button class="btn btn-dark btn-sm w-100 rounded-pill" (click)="sendDeletionRequest()" [disabled]="isSendingRequest || !deletionReason">
+                    {{ isSendingRequest ? 'Enviando...' : 'Enviar Solicitud' }}
+                </button>
+                <button class="btn btn-link btn-sm w-100 text-muted small text-decoration-none" (click)="chatStep = 'MENU'">Cancelar</button>
+            </div>
+
+            <div *ngIf="chatStep === 'DONE'" class="fade-in">
+                <div class="d-flex gap-2 mb-3 justify-content-end">
+                    <div class="chat-bubble user">Solicitud enviada.</div>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="chat-avatar"><i class="bi bi-robot"></i></div>
+                    <div class="chat-bubble bot">
+                        Hemos recibido tu solicitud. Tu sesión se cerrará automáticamente. ¡Gracias por usar FitTrack!
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
 </div>

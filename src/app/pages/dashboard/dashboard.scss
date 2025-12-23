@@ -1,73 +1,62 @@
-// VARIABLE DE COLOR (Verde Bosque)
+// VARIABLES
 $primary-green: #1b4d3e;
 $light-bg: #f8f9fa;
 
 .dashboard-container {
     min-height: 100vh;
     background-color: $light-bg;
+    position: relative;
+    overflow-x: hidden;
 }
 
-/* Animación de entrada */
-.fade-in {
-    animation: fadeIn 0.5s ease-out;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+/* Animaciones Generales */
+.fade-in { animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* TEXTOS Y COLORES */
-.text-main-green {
-    color: $primary-green !important;
-}
+/* NAVBAR & ICONS */
+.text-main-green { color: $primary-green !important; }
+.ls-1 { letter-spacing: 1px; }
 
-.ls-1 {
-    letter-spacing: 1px;
-}
-
-/* NAVBAR ICON */
 .icon-circle-small {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     background-color: rgba($primary-green, 0.1);
     color: $primary-green;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
 }
 
-/* PROFILE ICON */
 .profile-icon {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     background-color: $primary-green;
     color: white;
     cursor: pointer;
     transition: transform 0.2s;
+    &:hover { transform: scale(1.05); }
+}
 
-    &:hover {
+/* CAMPANA DE NOTIFICACIONES */
+.notification-icon {
+    width: 40px; height: 40px;
+    background-color: #f1f3f5;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+
+    &:hover, &.active {
+        background-color: #e9ecef;
+        color: $primary-green;
         transform: scale(1.05);
     }
 }
 
-/* --- TARJETAS DE MACROS --- */
+/* CARDS */
 .macro-card {
     border-radius: 16px;
     transition: transform 0.2s ease;
-
-    &:hover {
-        transform: translateY(-2px);
-    }
+    &:hover { transform: translateY(-2px); }
 }
-
-.macro-label {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-}
-
-/* Colores personalizados para macros */
+.macro-label { font-size: 0.7rem; fontWeight: 800; letter-spacing: 0.5px; }
 .text-success { color: #198754 !important; }
 .text-warning { color: #d4a017 !important; }
 .text-danger { color: #dc3545 !important; }
@@ -75,42 +64,91 @@ $light-bg: #f8f9fa;
 .bg-warning { background-color: #d4a017 !important; }
 .bg-danger { background-color: #dc3545 !important; }
 
-
-/* --- TARJETAS DE ACCIÓN (Action Cards) --- */
 .action-card {
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: white;
-
     &:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
-
-        /* Solo aplicamos el efecto verde si NO es la tarjeta Admin (que ya es oscura) */
-        &:not(.bg-dark) .icon-box {
-            background-color: $primary-green;
-            color: white;
-        }
+        .icon-box { background-color: $primary-green; color: white; }
     }
 }
-
-/* CAJA DE ICONOS EN CARDS */
 .icon-box {
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     border-radius: 12px;
     background-color: rgba($primary-green, 0.08);
     color: $primary-green;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; transition: all 0.2s ease;
 }
 
-/* --- NUEVO: Estilo para el icono dentro de la tarjeta oscura (Admin) --- */
-.bg-white-20 {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+/* ========================================= */
+/* CHAT WIDGET STYLES */
+/* ========================================= */
+.chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-width: 90%;
+    background: white;
+    border-radius: 20px;
+    z-index: 1050;
+    transform: translateY(120%); /* Oculto inicialmente */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
+
+    &.open {
+        transform: translateY(0); /* Visible */
+    }
+}
+
+.chat-header {
+    background-color: $primary-green;
+    color: white;
+}
+
+.chat-body {
+    height: 350px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-avatar {
+    width: 30px; height: 30px;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; color: #495057;
+    flex-shrink: 0;
+}
+
+.chat-bubble {
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    max-width: 80%;
+    line-height: 1.4;
+
+    &.bot {
+        background-color: white;
+        border: 1px solid #e9ecef;
+        border-top-left-radius: 2px;
+        color: #333;
+    }
+
+    &.user {
+        background-color: $primary-green;
+        color: white;
+        border-top-right-radius: 2px;
+    }
+}
+
+.text-small {
+    font-size: 0.85rem;
 }

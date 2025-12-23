@@ -18,6 +18,14 @@ export class AdminService {
     return this.http.get<any[]>(`${this.apiUrl}/deletion-requests`);
   }
 
+  getNotificationCount(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/notifications-count`);
+  }
+
+  markRequestAsHandled(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/request/${id}/mark-handled`, {});
+  }
+
   suspendUser(data: { userId: number, reason: string, durationValue: number, durationUnit: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/suspend`, data);
   }

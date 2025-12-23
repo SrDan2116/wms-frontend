@@ -28,7 +28,6 @@
     </div>
 
     <div *ngIf="activeTab === 'HISTORY'" class="container px-0 fade-in">
-
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -56,16 +55,13 @@
 
         <div *ngIf="selectedDate">
             <h6 class="fw-bold text-muted small ls-1 mb-3">ENTRENAMIENTOS DEL {{ selectedDate | date:'dd/MM' }}</h6>
-
             <div *ngIf="selectedWorkouts.length === 0" class="text-center py-4 text-muted bg-white rounded-4 border-dashed">
                 <small>Descanso o sin registros este día. 💤</small>
             </div>
-
             <div class="d-flex flex-column gap-3">
                 <div *ngFor="let entreno of selectedWorkouts" class="card border-0 shadow-sm workout-card">
                     <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0 text-main-green text-uppercase small ls-1">{{ entreno.nombreRutina }}</h6>
-
                         <button class="btn btn-sm text-danger-subtle p-0" (click)="deleteTraining(entreno.id!)" title="Eliminar registro">
                             <i class="bi bi-x-circle-fill fs-5"></i>
                         </button>
@@ -137,31 +133,58 @@
 
             <div formArrayName="ejercicios">
                 <div *ngFor="let ejercicio of ejerciciosControls.controls; let i=index" [formGroupName]="i" class="card border-0 shadow-sm mb-3">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
-                        <span class="fw-bold small">EJERCICIO {{ i + 1 }}</span>
-                        <i class="bi bi-trash text-white-50 cursor-pointer" (click)="removeEjercicio(i)"></i>
+
+                    <div class="card-header d-flex justify-content-between align-items-center py-2"
+                         [ngClass]="isExerciseCompleted(i) ? 'bg-light' : 'bg-dark text-white'">
+
+                        <span class="fw-bold small" [class.text-muted]="isExerciseCompleted(i)">
+                            EJERCICIO {{ i + 1 }}
+                        </span>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="form-check form-switch m-0" *ngIf="isExerciseCompleted(i) || !isExerciseCompleted(i)">
+                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                       [checked]="isExerciseCompleted(i)"
+                                       (change)="toggleExerciseCompletion(i)">
+                                <label class="form-check-label small ms-1" [class.text-white]="!isExerciseCompleted(i)">
+                                    {{ isExerciseCompleted(i) ? 'Terminado' : 'Activo' }}
+                                </label>
+                            </div>
+
+                            <i class="bi bi-trash cursor-pointer ms-2"
+                               [class.text-muted]="isExerciseCompleted(i)"
+                               [class.text-white-50]="!isExerciseCompleted(i)"
+                               (click)="removeEjercicio(i)"></i>
+                        </div>
                     </div>
-                    <div class="card-body">
+
+                    <div class="card-body" *ngIf="!isExerciseCompleted(i)">
                         <input type="text" class="form-control mb-3 fw-bold border-0 bg-light" formControlName="nombre" placeholder="Nombre Ejercicio">
 
                         <div formArrayName="series">
                             <div class="row g-2 mb-2 px-1" *ngIf="getSeriesControls(i).length > 0">
                                 <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">META</small></div>
-                                <div class="col-4"><small class="text-muted fw-bold" style="font-size: 0.65rem;">PESO (KG)</small></div>
-                                <div class="col-4"><small class="text-muted fw-bold" style="font-size: 0.65rem;">REPS</small></div>
-                                <div class="col-1"></div>
-                            </div>
+                                <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">PESO (KG)</small></div>
+                                <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">REPS</small></div>
+                                <div class="col-2"></div> <div class="col-1"></div> </div>
 
                             <div *ngFor="let serie of getSeriesControls(i).controls; let j=index" [formGroupName]="j" class="row g-2 mb-2 align-items-center">
                                 <div class="col-3 d-flex align-items-center justify-content-center bg-light rounded" style="height: 38px;">
                                     <small class="text-muted fw-bold" style="font-size: 0.8rem;">{{ serie.get('metaReps')?.value || '-' }}</small>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <input type="number" class="form-control text-center fw-bold" formControlName="peso">
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <input type="number" class="form-control text-center" formControlName="repeticiones">
                                 </div>
+
+                                <div class="col-2 text-center">
+                                    <button type="button" class="btn btn-sm btn-light text-main-green border-0" (click)="startRest()">
+                                        <i class="bi bi-stopwatch"></i>
+                                    </button>
+                                </div>
+
                                 <div class="col-1 text-center">
                                     <i class="bi bi-x text-danger cursor-pointer" (click)="removeSerie(i, j)"></i>
                                 </div>
@@ -170,12 +193,18 @@
 
                         <button type="button" class="btn btn-sm btn-light w-100 mt-2 text-primary fw-bold dashed-border" (click)="addSerie(i)">+ Agregar Serie</button>
                     </div>
+
+                    <div class="card-body bg-light text-center py-2" *ngIf="isExerciseCompleted(i)">
+                        <small class="text-muted fst-italic">
+                            <i class="bi bi-check-circle-fill text-success me-1"></i> Ejercicio finalizado
+                        </small>
+                    </div>
                 </div>
             </div>
 
             <button type="button" class="btn btn-outline-dark w-100 py-3 mb-3 fw-bold dashed-border" (click)="addEjercicio()">+ AGREGAR EJERCICIO MANUAL</button>
 
-            <div class="fixed-bottom p-3 bg-white border-top shadow-lg">
+            <div class="fixed-bottom p-3 bg-white border-top shadow-lg" style="z-index: 1040;">
                 <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-pill" [disabled]="workoutForm.invalid || isLoading">
                     {{ isLoading ? 'Guardando...' : 'FINALIZAR ENTRENAMIENTO' }}
                 </button>
@@ -183,5 +212,32 @@
 
             <div style="height: 100px;"></div>
         </form>
+    </div>
+</div>
+
+<div class="timer-widget shadow-lg" *ngIf="isTimerRunning">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2">
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="timer-display fw-bold text-dark fs-3">
+                {{ formatTime(timeLeft) }}
+            </div>
+            <div class="d-flex flex-column">
+                <small class="text-muted fw-bold" style="font-size: 0.7rem;">DESCANSANDO</small>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(10)">+10s</button>
+                    <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(-10)">-10s</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-danger btn-sm rounded-circle shadow-sm" style="width: 40px; height: 40px;" (click)="stopRest()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="progress" style="height: 4px;">
+        <div class="progress-bar bg-main-green transition-width" role="progressbar"
+             [style.width.%]="(timeLeft / restTime) * 100"></div>
     </div>
 </div>

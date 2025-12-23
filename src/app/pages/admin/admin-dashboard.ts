@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AdminService } from '../../services/admin/admin.service';
 import { FittrackAlert } from '../../utils/swal-custom';
 import Swal from 'sweetalert2';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -14,6 +14,7 @@ import { RouterLink } from '@angular/router';
 })
 export class AdminDashboardComponent implements OnInit {
   private adminService = inject(AdminService);
+  private route = inject(ActivatedRoute);
 
   users: any[] = [];
   deletionRequests: any[] = [];
@@ -21,7 +22,14 @@ export class AdminDashboardComponent implements OnInit {
   isLoading = true;
 
   ngOnInit() {
-    this.loadData();
+    this.route.queryParams.subscribe(params => {
+        if (params['tab'] === 'REQUESTS') {
+            this.activeTab = 'REQUESTS';
+        } else {
+            this.activeTab = 'USERS';
+        }
+        this.loadData();
+    });
   }
 
   loadData() {
@@ -44,7 +52,20 @@ export class AdminDashboardComponent implements OnInit {
     this.loadData();
   }
 
-  // --- LÓGICA DE SUSPENSIÓN (SweetAlert con Formulario HTML) ---
+  // --- ACCIONES ---
+
+  markHandled(id: number) {
+      this.adminService.markRequestAsHandled(id).subscribe(() => {
+          FittrackAlert.fire('Archivado', 'Solicitud marcada como atendida.', 'success');
+          // Actualización optimista: Cambiamos el estado localmente
+          this.deletionRequests = this.deletionRequests.map(req =>
+              req.id === id ? { ...req, estado: 'ATENDIDO' } : req
+          );
+          // Recarga de fondo
+          this.loadData();
+      });
+  }
+
   openSuspendModal(user: any) {
     Swal.fire({
       title: `Suspender a ${user.nombre}`,
@@ -52,7 +73,6 @@ export class AdminDashboardComponent implements OnInit {
         <div class="text-start">
           <label class="fw-bold small mb-1">Razón</label>
           <input id="swal-reason" class="form-control mb-3" placeholder="Ej: Comportamiento tóxico">
-
           <div class="row g-2">
             <div class="col-6">
                <label class="fw-bold small mb-1">Duración</label>
@@ -72,7 +92,7 @@ export class AdminDashboardComponent implements OnInit {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Aplicar Castigo 🔨',
+      confirmButtonText: 'Aplicar Castigo',
       confirmButtonColor: '#d33',
       preConfirm: () => {
         return {
@@ -85,6 +105,13 @@ export class AdminDashboardComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.adminService.suspendUser(result.value).subscribe(() => {
+
+            // 1. ACTUALIZACIÓN VISUAL INMEDIATA (Optimista)
+            // Buscamos al usuario en la lista y le ponemos suspended = true
+            this.users = this.users.map(u =>
+                u.id === user.id ? { ...u, suspended: true } : u
+            );
+
             FittrackAlert.fire('Suspendido', 'El usuario ha sido bloqueado.', 'success');
             this.loadData();
         });
@@ -94,24 +121,41 @@ export class AdminDashboardComponent implements OnInit {
 
   unsuspend(id: number) {
     this.adminService.unsuspendUser(id).subscribe(() => {
+
+        // 1. ACTUALIZACIÓN VISUAL INMEDIATA (Optimista)
+        // Buscamos al usuario y le ponemos suspended = false
+        this.users = this.users.map(u =>
+            u.id === id ? { ...u, suspended: false } : u
+        );
+
         FittrackAlert.fire('Liberado', 'El usuario puede acceder de nuevo.', 'success');
         this.loadData();
     });
   }
 
-  deleteUser(id: number, isRequest: boolean = false) {
+  deleteUser(id: number) {
     FittrackAlert.fire({
         title: '¿Borrado Definitivo?',
-        text: 'Esto eliminará rutinas, historial y datos. No hay vuelta atrás.',
+        text: 'Se eliminarán todos los datos del usuario. Esta acción es irreversible.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar cuenta',
         confirmButtonColor: '#d33'
     }).then((res) => {
         if(res.isConfirmed) {
-            this.adminService.deleteUser(id).subscribe(() => {
-                FittrackAlert.fire('Eliminado', 'Usuario borrado del sistema.', 'success');
-                this.loadData();
+            this.adminService.deleteUser(id).subscribe({
+                next: () => {
+                    // 1. ACTUALIZACIÓN VISUAL INMEDIATA (Optimista)
+                    this.users = this.users.filter(u => u.id !== id);
+                    this.deletionRequests = this.deletionRequests.filter(req => req.usuario.id !== id);
+
+                    FittrackAlert.fire('Eliminado', 'Usuario borrado del sistema.', 'success');
+                    this.loadData();
+                },
+                error: (err) => {
+                    console.error('Error al eliminar:', err);
+                    FittrackAlert.fire('Error', 'No se pudo eliminar el usuario.', 'error');
+                }
             });
         }
     });

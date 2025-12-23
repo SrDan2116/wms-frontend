@@ -18,8 +18,6 @@ export class LoginComponent {
 
   isLoading = false;
   errorMessage = '';
-
-  // Variable para mostrar/ocultar contraseña
   showPassword = false;
 
   form = this.fb.group({
@@ -27,7 +25,6 @@ export class LoginComponent {
     password: ['', [Validators.required]]
   });
 
-  // Función para alternar visibilidad
   togglePassword() {
     this.showPassword = !this.showPassword;
   }
@@ -43,11 +40,31 @@ export class LoginComponent {
 
     this.authService.login(loginRequest).subscribe({
       next: () => {
+        this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;
-        if (err.status === 403 || err.status === 401) {
+        console.error('Error login:', err);
+
+        // --- LÓGICA DE SUSPENSIÓN ---
+        // Verificamos si el backend nos devolvió el error específico de suspensión
+        if (err.status === 403 && err.error?.error === 'ACCOUNT_SUSPENDED') {
+            const fechaRaw = err.error.endsAt;
+            let fechaTexto = 'Indefinido';
+
+            if (fechaRaw && fechaRaw !== 'Indefinido') {
+                const dateObj = new Date(fechaRaw);
+                fechaTexto = dateObj.toLocaleDateString() + ' a las ' +
+                             dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
+            // Mensaje detallado para el usuario
+            this.errorMessage = `CUENTA SUSPENDIDA\nMotivo: ${err.error.reason}\nHasta: ${fechaTexto}`;
+
+        }
+        // --- ERROR DE CREDENCIALES O GENÉRICO ---
+        else if (err.status === 403 || err.status === 401) {
           this.errorMessage = 'Credenciales incorrectas. Inténtalo de nuevo.';
         } else {
           this.errorMessage = 'Ocurrió un error. Verifica tu conexión.';

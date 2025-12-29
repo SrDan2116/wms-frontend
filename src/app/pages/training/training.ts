@@ -29,6 +29,10 @@ export class TrainingComponent implements OnInit, OnDestroy {
   isLoading = true;
   history: HistorialEntrenamiento[] = [];
 
+  // --- NUEVO: COMPARACIÓN ÚLTIMA VEZ ---
+  // Guardamos: { 'Sentadilla': [ {peso:100, reps:5}, {peso:90, reps:8} ] }
+  lastSessionStats: { [key: string]: any[] } = {};
+
   // CALENDARIO
   currentDate = new Date();
   calendarDays: CalendarDay[] = [];
@@ -49,12 +53,12 @@ export class TrainingComponent implements OnInit, OnDestroy {
   });
 
   // --- VARIABLES TEMPORIZADOR & KEEP-ALIVE ---
-  pingInterval: any;      // Intervalo de seguridad (10 min)
-  timerInterval: any;     // Intervalo del cronómetro (1 seg)
+  pingInterval: any;
+  timerInterval: any;
 
-  restTime = 90;          // Tiempo de descanso por defecto (segundos)
-  timeLeft = 0;           // Tiempo restante actual
-  isTimerRunning = false; // Estado del timer visual
+  restTime = 90;
+  timeLeft = 0;
+  isTimerRunning = false;
 
   // =========================================================
   // CICLO DE VIDA
@@ -66,15 +70,12 @@ export class TrainingComponent implements OnInit, OnDestroy {
     this.loadHistory();
     this.loadMyRoutines();
 
-    // 1. PING AUTOMÁTICO DE SEGURIDAD (Cada 10 minutos)
-    // Esto evita que Render se duerma si el usuario tarda mucho pensando
     this.pingInterval = setInterval(() => {
         this.sendPing();
-    }, 600000); // 10 min = 600,000 ms
+    }, 600000);
   }
 
   ngOnDestroy() {
-    // Limpieza vital para no dejar procesos zombies
     if (this.pingInterval) clearInterval(this.pingInterval);
     if (this.timerInterval) clearInterval(this.timerInterval);
   }
@@ -84,21 +85,15 @@ export class TrainingComponent implements OnInit, OnDestroy {
   // =========================================================
 
   sendPing() {
-      // Llama al endpoint ligero que creamos en el backend
-      // Asumimos que agregaste keepAlive() a tu TrainingService o usas http directo
-      // Si no lo tienes en el servicio, usa this.http.get(...)
       console.log('Manteniendo servidor despierto... 💓');
       this.trainingService.keepAlive().subscribe();
   }
 
-  // Iniciar descanso (Botón del relojito)
   startRest(seconds: number = 120) {
       this.stopRest();
       this.restTime = seconds;
       this.timeLeft = seconds;
       this.isTimerRunning = true;
-
-      // Al iniciar descanso, enviamos un ping (acción de usuario)
       this.sendPing();
 
       this.timerInterval = setInterval(() => {
@@ -106,7 +101,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
               this.timeLeft--;
           } else {
               this.stopRest();
-              // Opcional: Sonido
               this.playAlarm();
           }
       }, 1000);
@@ -128,7 +122,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
   }
 
   playAlarm() {
-      // Sonido simple del sistema (si el navegador lo permite) o nada
       try {
           const audio = new Audio('assets/sounds/beep.mp3');
           audio.play();
@@ -139,8 +132,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
   // LÓGICA DE FORMULARIO MEJORADA (Checks)
   // =========================================================
 
-  // Helper para saber si un ejercicio está marcado como "Completado"
-  // Usamos un FormControl extra 'completed' en el grupo
   isExerciseCompleted(index: number): boolean {
       return this.ejerciciosControls.at(index).get('completed')?.value;
   }
@@ -150,14 +141,41 @@ export class TrainingComponent implements OnInit, OnDestroy {
       if (control) {
           const newVal = !control.value;
           control.setValue(newVal);
-
-          // Si marcó como completado, enviamos ping para asegurar
           if (newVal) this.sendPing();
       }
   }
 
   // =========================================================
-  // LÓGICA DE CARGA DE DATOS (Igual que antes)
+  // LÓGICA DE COMPARACIÓN (ÚLTIMA VEZ)
+  // =========================================================
+
+  // Busca en el historial la última vez que hiciste este ejercicio
+  findLastStatsForExercise(nombreEjercicio: string) {
+    // history ya viene ordenado por fecha descendente desde el backend/servicio
+    const lastWorkout = this.history.find(h =>
+        h.ejerciciosRealizados.some(e => e.nombreEjercicio === nombreEjercicio)
+    );
+
+    if (lastWorkout) {
+        const exerciseData = lastWorkout.ejerciciosRealizados.find(e => e.nombreEjercicio === nombreEjercicio);
+        if (exerciseData) {
+            this.lastSessionStats[nombreEjercicio] = exerciseData.series;
+        }
+    }
+  }
+
+  // Obtiene el texto para mostrar en el HTML (Ej: "100kg x 8")
+  getLastSeriesInfo(nombreEjercicio: string, indexSerie: number): string | null {
+      const stats = this.lastSessionStats[nombreEjercicio];
+      if (stats && stats[indexSerie]) {
+          const s = stats[indexSerie];
+          return `${s.peso}kg x ${s.repeticiones}`;
+      }
+      return null;
+  }
+
+  // =========================================================
+  // LÓGICA DE CARGA DE DATOS
   // =========================================================
 
   loadMyRoutines() {
@@ -271,12 +289,20 @@ export class TrainingComponent implements OnInit, OnDestroy {
     const indexDia = event.target.value;
     if (indexDia === "" || !this.rutinaSeleccionada) return;
     const diaPlan = this.diasDisponibles[indexDia];
+
+    // Limpiamos los inputs anteriores
     this.ejerciciosControls.clear();
 
+    // --- NUEVO: Limpiamos los stats de la sesión anterior ---
+    this.lastSessionStats = {};
+
     diaPlan.ejercicios.forEach(plan => {
+        // --- NUEVO: Buscamos el historial para este ejercicio ---
+        this.findLastStatsForExercise(plan.nombre);
+
         const ejercicioGroup = this.fb.group({
             nombre: [plan.nombre, Validators.required],
-            completed: [false], // NUEVO: Estado de completado
+            completed: [false],
             series: this.fb.array([])
         });
         for (let i = 0; i < plan.seriesObjetivo; i++) {
@@ -293,7 +319,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
   addEjercicio() {
     const g = this.fb.group({
         nombre: ['', Validators.required],
-        completed: [false], // NUEVO
+        completed: [false],
         series: this.fb.array([])
     });
     (g.get('series') as FormArray).push(this.createSerieGroup());
@@ -325,10 +351,8 @@ export class TrainingComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     const formValue = this.workoutForm.value;
-    // Eliminamos el campo 'completed' antes de enviar, ya que el backend no lo espera en el Historial
-    // (O si quieres guardarlo, déjalo, pero asegúrate que el DTO lo acepte)
     const ejerciciosLimpios = formValue.ejercicios.map((ej: any) => {
-        const { completed, ...resto } = ej; // Destructuring para quitar 'completed'
+        const { completed, ...resto } = ej;
         return resto;
     });
 
@@ -356,6 +380,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
             nombreRutina: '', notasGenerales: ''
         });
         this.ejerciciosControls.clear();
+        this.lastSessionStats = {}; // Limpiar stats visuales
         this.activeTab = 'HISTORY';
         this.isLoading = false;
       },

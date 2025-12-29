@@ -168,12 +168,19 @@
                                 <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">REPS</small></div>
                                 <div class="col-2"></div> <div class="col-1"></div> </div>
 
-                            <div *ngFor="let serie of getSeriesControls(i).controls; let j=index" [formGroupName]="j" class="row g-2 mb-2 align-items-center">
-                                <div class="col-3 d-flex align-items-center justify-content-center bg-light rounded" style="height: 38px;">
-                                    <small class="text-muted fw-bold" style="font-size: 0.8rem;">{{ serie.get('metaReps')?.value || '-' }}</small>
+                            <div *ngFor="let serie of getSeriesControls(i).controls; let j=index" [formGroupName]="j" class="row g-2 mb-3 align-items-start">
+                                <div class="col-3 d-flex flex-column align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center bg-light rounded w-100" style="height: 38px;">
+                                        <small class="text-muted fw-bold" style="font-size: 0.8rem;">{{ serie.get('metaReps')?.value || '-' }}</small>
+                                    </div>
                                 </div>
                                 <div class="col-3">
                                     <input type="number" class="form-control text-center fw-bold" formControlName="peso">
+                                    <small *ngIf="getLastSeriesInfo(ejercicio.value.nombre, j)"
+                                           class="d-block text-center text-muted mt-1 fade-in"
+                                           style="font-size: 0.65rem; white-space: nowrap;">
+                                        <i class="bi bi-clock-history me-1"></i>{{ getLastSeriesInfo(ejercicio.value.nombre, j) }}
+                                    </small>
                                 </div>
                                 <div class="col-3">
                                     <input type="number" class="form-control text-center" formControlName="repeticiones">

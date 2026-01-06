@@ -139,23 +139,42 @@
                         <h6 class="small fw-bold text-muted mb-3">EJERCICIOS</h6>
                         <div formArrayName="ejercicios">
                             <div *ngFor="let ej of getEjerciciosControls(i).controls; let j = index" [formGroupName]="j" class="row g-2 mb-2 align-items-center bg-white p-2 rounded border mx-0">
-                                <div class="col-md-5 col-12">
+
+                                <div class="col-md-4 col-12">
                                     <input type="text" class="form-control form-control-sm fw-bold border-0 shadow-none" formControlName="nombre" placeholder="Nombre Ejercicio">
                                 </div>
-                                <div class="col-md-2 col-4">
+
+                                <div class="col-md-2 col-3">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text border-0 bg-transparent text-muted px-1">Sets</span>
                                         <input type="number" class="form-control text-center bg-light border-0" formControlName="seriesObjetivo">
                                     </div>
                                 </div>
-                                <div class="col-md-3 col-6">
+
+                                <div class="col-md-3 col-4">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text border-0 bg-transparent text-muted px-1">Reps</span>
                                         <input type="text" class="form-control text-center bg-light border-0" formControlName="repeticionesObjetivo" placeholder="10-12">
                                     </div>
                                 </div>
-                                <div class="col-md-2 col-2 text-end">
-                                    <i class="bi bi-x-circle text-danger" style="cursor: pointer;" (click)="removeEjercicio(i, j)"></i>
+
+                                <div class="col-md-3 col-5 text-end d-flex justify-content-end align-items-center gap-1">
+
+                                    <button type="button" class="btn btn-sm btn-link text-dark p-0"
+                                            (click)="moveEjercicio(i, j, 'up')"
+                                            [disabled]="j === 0"
+                                            title="Subir">
+                                        <i class="bi bi-arrow-up-circle"></i>
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-link text-dark p-0 me-2"
+                                            (click)="moveEjercicio(i, j, 'down')"
+                                            [disabled]="j === getEjerciciosControls(i).length - 1"
+                                            title="Bajar">
+                                        <i class="bi bi-arrow-down-circle"></i>
+                                    </button>
+
+                                    <i class="bi bi-x-circle text-danger fs-5" style="cursor: pointer;" (click)="removeEjercicio(i, j)" title="Eliminar Ejercicio"></i>
                                 </div>
                             </div>
                         </div>

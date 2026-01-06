@@ -9,8 +9,8 @@ import { FittrackAlert } from '../../utils/swal-custom';
   selector: 'app-routines',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './routines.html', // Asegúrate que el nombre coincida (routines.component.html o routines.html)
-  styleUrl: './routines.scss'      // Asegúrate que el nombre coincida
+  templateUrl: './routines.html',
+  styleUrl: './routines.scss'
 })
 export class RoutinesComponent implements OnInit {
   private routinesService = inject(RoutinesService);
@@ -99,6 +99,19 @@ export class RoutinesComponent implements OnInit {
     this.getEjerciciosControls(diaIndex).removeAt(ejIndex);
   }
 
+  // --- NUEVA FUNCIÓN: MOVER EJERCICIOS ---
+  moveEjercicio(diaIndex: number, index: number, direction: 'up' | 'down') {
+    const ejerciciosArray = this.getEjerciciosControls(diaIndex);
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+
+    // Verificar que no nos salgamos de los límites del array
+    if (newIndex >= 0 && newIndex < ejerciciosArray.length) {
+      const control = ejerciciosArray.at(index);
+      ejerciciosArray.removeAt(index);
+      ejerciciosArray.insert(newIndex, control);
+    }
+  }
+
   // --- GUARDAR Y BORRAR (OPTIMIZADO) ---
 
   saveRoutine() {
@@ -147,7 +160,7 @@ export class RoutinesComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Sí, borrar rutina',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true // Pone el botón de cancelar a la izquierda (mejor UX)
+      reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
 
@@ -162,7 +175,6 @@ export class RoutinesComponent implements OnInit {
         // 2. Petición al Backend
         this.routinesService.deleteRoutine(id).subscribe({
           next: () => {
-             // Opcional: Alerta pequeña de éxito
              const Toast = FittrackAlert.mixin({
                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
              });

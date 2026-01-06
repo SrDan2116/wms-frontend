@@ -5,6 +5,8 @@ import { TrainingService, HistorialEntrenamiento } from '../../services/training
 import { RoutinesService, Rutina, DiaRutina } from '../../services/routines/routines.service';
 import { RouterLink } from '@angular/router';
 import { FittrackAlert } from '../../utils/swal-custom';
+// --- IMPORTACIÓN NUEVA PARA EL AUTO-GUARDADO ---
+import { debounceTime } from 'rxjs/operators';
 
 interface CalendarDay {
   date: Date;
@@ -29,8 +31,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
   isLoading = true;
   history: HistorialEntrenamiento[] = [];
 
-  // --- NUEVO: COMPARACIÓN ÚLTIMA VEZ ---
-  // Guardamos: { 'Sentadilla': [ {peso:100, reps:5}, {peso:90, reps:8} ] }
+  // --- COMPARACIÓN ÚLTIMA VEZ ---
   lastSessionStats: { [key: string]: any[] } = {};
 
   // CALENDARIO
@@ -60,6 +61,9 @@ export class TrainingComponent implements OnInit, OnDestroy {
   timeLeft = 0;
   isTimerRunning = false;
 
+  // --- NUEVO: Clave para localStorage ---
+  private readonly STORAGE_KEY = 'fittrack_temp_workout_v1';
+
   // =========================================================
   // CICLO DE VIDA
   // =========================================================
@@ -70,6 +74,12 @@ export class TrainingComponent implements OnInit, OnDestroy {
     this.loadHistory();
     this.loadMyRoutines();
 
+    // 1. Intentar restaurar datos guardados
+    this.restoreDraft();
+
+    // 2. Configurar el auto-guardado
+    this.setupAutoSave();
+
     this.pingInterval = setInterval(() => {
         this.sendPing();
     }, 600000);
@@ -78,6 +88,75 @@ export class TrainingComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.pingInterval) clearInterval(this.pingInterval);
     if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
+  // =========================================================
+  // --- NUEVO: LÓGICA DE AUTO-GUARDADO Y RESTAURACIÓN ---
+  // =========================================================
+
+  setupAutoSave() {
+    // Guarda 500ms después de que dejes de escribir
+    this.workoutForm.valueChanges
+      .pipe(debounceTime(500))
+      .subscribe(val => {
+        // Solo guardamos si hay ejercicios para evitar guardar formularios vacíos
+        if (val.ejercicios && val.ejercicios.length > 0) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(val));
+        }
+      });
+  }
+
+  restoreDraft() {
+    const draftJson = localStorage.getItem(this.STORAGE_KEY);
+    if (draftJson) {
+      try {
+        const draft = JSON.parse(draftJson);
+
+        // Limpiamos el form actual
+        this.ejerciciosControls.clear();
+
+        // Reconstruimos la estructura del formulario (Ejercicios y Series)
+        if (draft.ejercicios && Array.isArray(draft.ejercicios)) {
+          draft.ejercicios.forEach((ej: any) => {
+
+            const seriesFormArray = this.fb.array([]);
+
+            if (ej.series && Array.isArray(ej.series)) {
+              ej.series.forEach((s: any) => {
+                // CORRECCIÓN DE TIPO: 'as any' para evitar error de compilación
+                seriesFormArray.push(this.createSerieGroup(s.metaReps || '-') as any);
+              });
+            }
+
+            const ejercicioGroup = this.fb.group({
+              nombre: [ej.nombre || '', Validators.required],
+              completed: [ej.completed || false],
+              series: seriesFormArray
+            });
+
+            this.ejerciciosControls.push(ejercicioGroup);
+          });
+        }
+
+        // Aplicamos los valores
+        this.workoutForm.patchValue(draft);
+
+        // Activamos la pestaña de registro
+        this.activeTab = 'NEW';
+
+        // Notificación discreta
+        const Toast = FittrackAlert.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+        Toast.fire({ icon: 'info', title: 'Sesión restaurada' });
+
+      } catch (e) {
+        console.error('Error al restaurar borrador', e);
+        this.clearDraft();
+      }
+    }
+  }
+
+  clearDraft() {
+    localStorage.removeItem(this.STORAGE_KEY);
   }
 
   // =========================================================
@@ -149,9 +228,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
   // LÓGICA DE COMPARACIÓN (ÚLTIMA VEZ)
   // =========================================================
 
-  // Busca en el historial la última vez que hiciste este ejercicio
   findLastStatsForExercise(nombreEjercicio: string) {
-    // history ya viene ordenado por fecha descendente desde el backend/servicio
     const lastWorkout = this.history.find(h =>
         h.ejerciciosRealizados.some(e => e.nombreEjercicio === nombreEjercicio)
     );
@@ -164,7 +241,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Obtiene el texto para mostrar en el HTML (Ej: "100kg x 8")
   getLastSeriesInfo(nombreEjercicio: string, indexSerie: number): string | null {
       const stats = this.lastSessionStats[nombreEjercicio];
       if (stats && stats[indexSerie]) {
@@ -231,7 +307,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
     this.selectedWorkouts = this.history.filter(h => this.isSameDate(new Date(h.fechaHora), date));
   }
 
-  // --- BORRAR ENTRENO ---
   deleteTraining(id: number) {
     FittrackAlert.fire({
       title: '¿Borrar registro?',
@@ -275,6 +350,9 @@ export class TrainingComponent implements OnInit, OnDestroy {
   // --- RUTINAS Y FORMULARIO ---
   onRutinaSelect(event: any) {
     const idRutina = event.target.value;
+    // Limpiamos borrador al cambiar rutina para evitar mezclas
+    this.clearDraft();
+
     this.rutinaSeleccionada = this.misRutinas.find(r => r.id == idRutina) || null;
     if (this.rutinaSeleccionada) {
         this.diasDisponibles = this.rutinaSeleccionada.dias;
@@ -288,16 +366,20 @@ export class TrainingComponent implements OnInit, OnDestroy {
   onDiaSelect(event: any) {
     const indexDia = event.target.value;
     if (indexDia === "" || !this.rutinaSeleccionada) return;
+
+    // Limpiamos borrador al cargar template nuevo
+    this.clearDraft();
+
     const diaPlan = this.diasDisponibles[indexDia];
 
     // Limpiamos los inputs anteriores
     this.ejerciciosControls.clear();
 
-    // --- NUEVO: Limpiamos los stats de la sesión anterior ---
+    // Limpiamos los stats de la sesión anterior
     this.lastSessionStats = {};
 
     diaPlan.ejercicios.forEach(plan => {
-        // --- NUEVO: Buscamos el historial para este ejercicio ---
+        // Buscamos el historial para este ejercicio
         this.findLastStatsForExercise(plan.nombre);
 
         const ejercicioGroup = this.fb.group({
@@ -306,7 +388,8 @@ export class TrainingComponent implements OnInit, OnDestroy {
             series: this.fb.array([])
         });
         for (let i = 0; i < plan.seriesObjetivo; i++) {
-            (ejercicioGroup.get('series') as FormArray).push(this.createSerieGroup(plan.repeticionesObjetivo));
+            // CORRECCIÓN DE TIPO: 'as any'
+            (ejercicioGroup.get('series') as FormArray).push(this.createSerieGroup(plan.repeticionesObjetivo) as any);
         }
         this.ejerciciosControls.push(ejercicioGroup);
     });
@@ -314,7 +397,9 @@ export class TrainingComponent implements OnInit, OnDestroy {
   }
 
   get ejerciciosControls() { return (this.workoutForm.get('ejercicios') as FormArray); }
-  getSeriesControls(index: number) { return (this.ejerciciosControls.at(index).get('series') as FormArray); }
+
+  // CORRECCIÓN DE TIPO: 'as FormArray<any>' para permitir acceso genérico
+  getSeriesControls(index: number) { return (this.ejerciciosControls.at(index).get('series') as FormArray<any>); }
 
   addEjercicio() {
     const g = this.fb.group({
@@ -322,7 +407,8 @@ export class TrainingComponent implements OnInit, OnDestroy {
         completed: [false],
         series: this.fb.array([])
     });
-    (g.get('series') as FormArray).push(this.createSerieGroup());
+    // CORRECCIÓN DE TIPO: 'as any'
+    (g.get('series') as FormArray).push(this.createSerieGroup() as any);
     this.ejerciciosControls.push(g);
   }
 
@@ -333,7 +419,9 @@ export class TrainingComponent implements OnInit, OnDestroy {
     const last = series.length > 0 ? series.at(series.length - 1).value : null;
     const s = this.createSerieGroup();
     if (last) s.patchValue({ peso: last.peso, repeticiones: last.repeticiones });
-    series.push(s);
+
+    // CORRECCIÓN DE TIPO: 'as any'
+    series.push(s as any);
   }
 
   removeSerie(i: number, j: number) { this.getSeriesControls(i).removeAt(j); }
@@ -368,6 +456,9 @@ export class TrainingComponent implements OnInit, OnDestroy {
 
     this.trainingService.saveWorkout(payload).subscribe({
       next: (nuevo) => {
+        // Borramos el borrador al guardar exitosamente
+        this.clearDraft();
+
         this.history.unshift(nuevo);
         this.generateCalendar();
 
@@ -380,9 +471,17 @@ export class TrainingComponent implements OnInit, OnDestroy {
             nombreRutina: '', notasGenerales: ''
         });
         this.ejerciciosControls.clear();
-        this.lastSessionStats = {}; // Limpiar stats visuales
+        this.lastSessionStats = {};
         this.activeTab = 'HISTORY';
         this.isLoading = false;
+
+        FittrackAlert.fire({
+             title: '¡Guardado!',
+             text: 'Entrenamiento registrado correctamente.',
+             icon: 'success',
+             timer: 1500,
+             showConfirmButton: false
+        });
       },
       error: (err) => {
         console.error(err);

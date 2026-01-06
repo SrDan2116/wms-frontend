@@ -1,250 +1,384 @@
 <div class="training-container py-4 px-3 fade-in">
+  <div class="d-flex justify-content-between align-items-center mb-4 container px-0">
+    <div>
+      <h4 class="fw-bold mb-0 text-dark">Diario de Entreno</h4>
+      <p class="text-muted small mb-0">Gestiona tu progreso diario</p>
+    </div>
+    <a routerLink="/dashboard" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+  </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 container px-0">
-        <div>
-            <h4 class="fw-bold mb-0 text-dark">Diario de Entreno</h4>
-            <p class="text-muted small mb-0">Gestiona tu progreso diario</p>
+  <div class="container px-0 mb-4">
+    <div class="bg-white p-1 rounded-pill shadow-sm d-flex">
+      <button
+        class="btn flex-fill rounded-pill fw-bold small py-2 transition"
+        [class.btn-dark]="activeTab === 'HISTORY'"
+        [class.text-muted]="activeTab !== 'HISTORY'"
+        (click)="switchTab('HISTORY')"
+      >
+        Calendario
+      </button>
+      <button
+        class="btn flex-fill rounded-pill fw-bold small py-2 transition"
+        [class.btn-dark]="activeTab === 'NEW'"
+        [class.text-muted]="activeTab !== 'NEW'"
+        (click)="switchTab('NEW')"
+      >
+        Registrar
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'HISTORY'" class="container px-0 fade-in">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <button class="btn btn-sm btn-light rounded-circle" (click)="changeMonth(-1)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <h5 class="fw-bold text-dark mb-0 text-capitalize">
+            {{ currentDate | date : 'MMMM yyyy' }}
+          </h5>
+          <button class="btn btn-sm btn-light rounded-circle" (click)="changeMonth(1)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
-        <a routerLink="/dashboard" class="btn btn-outline-dark btn-sm rounded-pill px-3">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
+        <div class="calendar-grid mb-2">
+          <div
+            *ngFor="let day of ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']"
+            class="text-center small text-muted fw-bold"
+          >
+            {{ day }}
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <div
+            *ngFor="let day of calendarDays"
+            class="day-cell"
+            [class.current-month]="day.isCurrentMonth"
+            [class.other-month]="!day.isCurrentMonth"
+            [class.selected]="selectedDate && day.date.getTime() === selectedDate.getTime()"
+            [class.today]="day.isToday"
+            (click)="selectDate(day.date)"
+          >
+            <span>{{ day.date.getDate() }}</span>
+            <div *ngIf="day.hasWorkout" class="workout-dot"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="container px-0 mb-4">
-        <div class="bg-white p-1 rounded-pill shadow-sm d-flex">
-            <button class="btn flex-fill rounded-pill fw-bold small py-2 transition"
-                [class.btn-dark]="activeTab === 'HISTORY'"
-                [class.text-muted]="activeTab !== 'HISTORY'"
-                (click)="switchTab('HISTORY')">
-                Calendario
+    <div *ngIf="selectedDate">
+      <h6 class="fw-bold text-muted small ls-1 mb-3">
+        ENTRENAMIENTOS DEL {{ selectedDate | date : 'dd/MM' }}
+      </h6>
+      <div
+        *ngIf="selectedWorkouts.length === 0"
+        class="text-center py-4 text-muted bg-white rounded-4 border-dashed"
+      >
+        <small>Descanso o sin registros este día. 💤</small>
+      </div>
+      <div class="d-flex flex-column gap-3">
+        <div *ngFor="let entreno of selectedWorkouts" class="card border-0 shadow-sm workout-card">
+          <div
+            class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center"
+          >
+            <h6 class="fw-bold mb-0 text-main-green text-uppercase small ls-1">
+              {{ entreno.nombreRutina }}
+            </h6>
+            <button
+              class="btn btn-sm text-danger-subtle p-0"
+              (click)="deleteTraining(entreno.id!)"
+              title="Eliminar registro"
+            >
+              <i class="bi bi-x-circle-fill fs-5"></i>
             </button>
-            <button class="btn flex-fill rounded-pill fw-bold small py-2 transition"
-                [class.btn-dark]="activeTab === 'NEW'"
-                [class.text-muted]="activeTab !== 'NEW'"
-                (click)="switchTab('NEW')">
-                Registrar
+          </div>
+          <div class="card-body">
+            <p *ngIf="entreno.notasGenerales" class="small text-muted fst-italic mb-3">
+              "{{ entreno.notasGenerales }}"
+            </p>
+            <div class="table-responsive">
+              <table class="table table-sm table-borderless mb-0 align-middle">
+                <tbody>
+                  <tr *ngFor="let ej of entreno.ejerciciosRealizados" class="border-bottom">
+                    <td class="fw-bold text-dark py-2 small" style="width: 45%">
+                      {{ ej.nombreEjercicio }}
+                    </td>
+                    <td class="py-2 text-end">
+                      <span
+                        *ngFor="let serie of ej.series"
+                        class="badge bg-light text-dark me-1 border fw-normal"
+                      >
+                        {{ serie.peso }}kg x {{ serie.repeticiones }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'NEW'" class="container px-0 fade-in pb-5">
+    <div class="card card-load-routine shadow-sm mb-4">
+      <div class="card-body">
+        <h6 class="fw-bold text-main-green mb-3 small ls-1">CARGAR RUTINA</h6>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <select
+              class="form-select border-0 shadow-none"
+              (change)="onRutinaSelect($event)"
+              [value]="currentRoutineId"
+            >
+              <option value="">Selecciona Rutina...</option>
+              <option *ngFor="let r of misRutinas" [value]="r.id">{{ r.nombre }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <select
+              class="form-select border-0 shadow-none"
+              (change)="onDiaSelect($event)"
+              [disabled]="!rutinaSeleccionada"
+              [value]="currentDayIndex"
+            >
+              <option value="">Selecciona el Día...</option>
+              <option *ngFor="let dia of diasDisponibles; let i = index" [value]="i">
+                {{ dia.nombre }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="workoutForm" (ngSubmit)="saveWorkout()">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-muted">FECHA DEL ENTRENO</label>
+              <input
+                type="date"
+                class="form-control fw-bold border-light bg-light"
+                formControlName="fechaHora"
+              />
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+              <label class="form-label small fw-bold text-muted">NOMBRE DE LA RUTINA</label>
+              <input
+                type="text"
+                class="form-control fw-bold border-light bg-light"
+                formControlName="nombreRutina"
+                placeholder="Ej: Pierna Pesada"
+              />
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-bold text-muted">NOTAS DEL DÍA</label>
+            <textarea
+              class="form-control border-light bg-light"
+              formControlName="notasGenerales"
+              rows="2"
+              placeholder="Me sentí con mucha energía..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div formArrayName="ejercicios">
+        <div
+          *ngFor="let ejercicio of ejerciciosControls.controls; let i = index"
+          [formGroupName]="i"
+          class="card border-0 shadow-sm mb-3"
+        >
+          <div
+            class="card-header d-flex justify-content-between align-items-center py-2"
+            [ngClass]="isExerciseCompleted(i) ? 'bg-light' : 'bg-dark text-white'"
+          >
+            <span class="fw-bold small" [class.text-muted]="isExerciseCompleted(i)">
+              EJERCICIO {{ i + 1 }}
+            </span>
+
+            <div class="d-flex align-items-center gap-2">
+              <div
+                class="form-check form-switch m-0"
+                *ngIf="isExerciseCompleted(i) || !isExerciseCompleted(i)"
+              >
+                <input
+                  class="form-check-input cursor-pointer"
+                  type="checkbox"
+                  role="switch"
+                  [checked]="isExerciseCompleted(i)"
+                  (change)="toggleExerciseCompletion(i)"
+                />
+                <label
+                  class="form-check-label small ms-1"
+                  [class.text-white]="!isExerciseCompleted(i)"
+                >
+                  {{ isExerciseCompleted(i) ? 'Terminado' : 'Activo' }}
+                </label>
+              </div>
+
+              <i
+                class="bi bi-trash cursor-pointer ms-2"
+                [class.text-muted]="isExerciseCompleted(i)"
+                [class.text-white-50]="!isExerciseCompleted(i)"
+                (click)="removeEjercicio(i)"
+              ></i>
+            </div>
+          </div>
+
+          <div class="card-body" *ngIf="!isExerciseCompleted(i)">
+            <input
+              type="text"
+              class="form-control mb-3 fw-bold border-0 bg-light"
+              formControlName="nombre"
+              placeholder="Nombre Ejercicio"
+            />
+
+            <div formArrayName="series">
+              <div class="row g-2 mb-2 px-1" *ngIf="getSeriesControls(i).length > 0">
+                <div class="col-3">
+                  <small class="text-muted fw-bold" style="font-size: 0.65rem">META</small>
+                </div>
+                <div class="col-3">
+                  <small class="text-muted fw-bold" style="font-size: 0.65rem">PESO (KG)</small>
+                </div>
+                <div class="col-3">
+                  <small class="text-muted fw-bold" style="font-size: 0.65rem">REPS</small>
+                </div>
+                <div class="col-2"></div>
+                <div class="col-1"></div>
+              </div>
+
+              <div
+                *ngFor="let serie of getSeriesControls(i).controls; let j = index"
+                [formGroupName]="j"
+                class="row g-2 mb-3 align-items-start"
+              >
+                <div class="col-3 d-flex flex-column align-items-center">
+                  <div
+                    class="d-flex align-items-center justify-content-center bg-light rounded w-100"
+                    style="height: 38px"
+                  >
+                    <small class="text-muted fw-bold" style="font-size: 0.8rem">{{
+                      serie.get('metaReps')?.value || '-'
+                    }}</small>
+                  </div>
+                </div>
+                <div class="col-3">
+                  <input
+                    type="number"
+                    class="form-control text-center fw-bold"
+                    formControlName="peso"
+                  />
+                  <small
+                    *ngIf="getLastSeriesInfo(ejercicio.value.nombre, j)"
+                    class="d-block text-center text-muted mt-1 fade-in"
+                    style="font-size: 0.65rem; white-space: nowrap"
+                  >
+                    <i class="bi bi-clock-history me-1"></i
+                    >{{ getLastSeriesInfo(ejercicio.value.nombre, j) }}
+                  </small>
+                </div>
+                <div class="col-3">
+                  <input
+                    type="number"
+                    class="form-control text-center"
+                    formControlName="repeticiones"
+                  />
+                </div>
+
+                <div class="col-2 text-center">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-light text-main-green border-0"
+                    (click)="startRest()"
+                  >
+                    <i class="bi bi-stopwatch"></i>
+                  </button>
+                </div>
+
+                <div class="col-1 text-center">
+                  <i class="bi bi-x text-danger cursor-pointer" (click)="removeSerie(i, j)"></i>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-light w-100 mt-2 text-primary fw-bold dashed-border"
+              (click)="addSerie(i)"
+            >
+              + Agregar Serie
             </button>
+          </div>
+
+          <div class="card-body bg-light text-center py-2" *ngIf="isExerciseCompleted(i)">
+            <small class="text-muted fst-italic">
+              <i class="bi bi-check-circle-fill text-success me-1"></i> Ejercicio finalizado
+            </small>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <div *ngIf="activeTab === 'HISTORY'" class="container px-0 fade-in">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <button class="btn btn-sm btn-light rounded-circle" (click)="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
-                    <h5 class="fw-bold text-dark mb-0 text-capitalize">{{ currentDate | date:'MMMM yyyy' }}</h5>
-                    <button class="btn btn-sm btn-light rounded-circle" (click)="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
-                </div>
-                <div class="calendar-grid mb-2">
-                    <div *ngFor="let day of ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']" class="text-center small text-muted fw-bold">{{ day }}</div>
-                </div>
-                <div class="calendar-grid">
-                    <div *ngFor="let day of calendarDays"
-                         class="day-cell"
-                         [class.current-month]="day.isCurrentMonth"
-                         [class.other-month]="!day.isCurrentMonth"
-                         [class.selected]="selectedDate && day.date.getTime() === selectedDate.getTime()"
-                         [class.today]="day.isToday"
-                         (click)="selectDate(day.date)">
-                        <span>{{ day.date.getDate() }}</span>
-                        <div *ngIf="day.hasWorkout" class="workout-dot"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <button
+        type="button"
+        class="btn btn-outline-dark w-100 py-3 mb-3 fw-bold dashed-border"
+        (click)="addEjercicio()"
+      >
+        + AGREGAR EJERCICIO MANUAL
+      </button>
 
-        <div *ngIf="selectedDate">
-            <h6 class="fw-bold text-muted small ls-1 mb-3">ENTRENAMIENTOS DEL {{ selectedDate | date:'dd/MM' }}</h6>
-            <div *ngIf="selectedWorkouts.length === 0" class="text-center py-4 text-muted bg-white rounded-4 border-dashed">
-                <small>Descanso o sin registros este día. 💤</small>
-            </div>
-            <div class="d-flex flex-column gap-3">
-                <div *ngFor="let entreno of selectedWorkouts" class="card border-0 shadow-sm workout-card">
-                    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0 text-main-green text-uppercase small ls-1">{{ entreno.nombreRutina }}</h6>
-                        <button class="btn btn-sm text-danger-subtle p-0" (click)="deleteTraining(entreno.id!)" title="Eliminar registro">
-                            <i class="bi bi-x-circle-fill fs-5"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <p *ngIf="entreno.notasGenerales" class="small text-muted fst-italic mb-3">"{{ entreno.notasGenerales }}"</p>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-borderless mb-0 align-middle">
-                                <tbody>
-                                    <tr *ngFor="let ej of entreno.ejerciciosRealizados" class="border-bottom">
-                                        <td class="fw-bold text-dark py-2 small" style="width: 45%">{{ ej.nombreEjercicio }}</td>
-                                        <td class="py-2 text-end">
-                                            <span *ngFor="let serie of ej.series" class="badge bg-light text-dark me-1 border fw-normal">
-                                                {{ serie.peso }}kg x {{ serie.repeticiones }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+      <div class="fixed-bottom p-3 bg-white border-top shadow-lg" style="z-index: 1040">
+        <button
+          type="submit"
+          class="btn btn-dark w-100 py-3 fw-bold rounded-pill"
+          [disabled]="workoutForm.invalid || isLoading"
+        >
+          {{ isLoading ? 'Guardando...' : 'FINALIZAR ENTRENAMIENTO' }}
+        </button>
+      </div>
 
-    <div *ngIf="activeTab === 'NEW'" class="container px-0 fade-in pb-5">
-
-        <div class="card card-load-routine shadow-sm mb-4">
-            <div class="card-body">
-                <h6 class="fw-bold text-main-green mb-3 small ls-1">CARGAR RUTINA</h6>
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <select class="form-select border-0 shadow-none" (change)="onRutinaSelect($event)">
-                            <option value="">Selecciona Rutina...</option>
-                            <option *ngFor="let r of misRutinas" [value]="r.id">{{ r.nombre }}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <select class="form-select border-0 shadow-none" (change)="onDiaSelect($event)" [disabled]="!rutinaSeleccionada">
-                            <option value="">Selecciona el Día...</option>
-                            <option *ngFor="let dia of diasDisponibles; let i = index" [value]="i">{{ dia.nombre }}</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <form [formGroup]="workoutForm" (ngSubmit)="saveWorkout()">
-
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">FECHA DEL ENTRENO</label>
-                            <input type="date" class="form-control fw-bold border-light bg-light" formControlName="fechaHora">
-                        </div>
-                        <div class="col-md-6 mt-3 mt-md-0">
-                            <label class="form-label small fw-bold text-muted">NOMBRE DE LA RUTINA</label>
-                            <input type="text" class="form-control fw-bold border-light bg-light" formControlName="nombreRutina" placeholder="Ej: Pierna Pesada">
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label small fw-bold text-muted">NOTAS DEL DÍA</label>
-                        <textarea class="form-control border-light bg-light" formControlName="notasGenerales" rows="2" placeholder="Me sentí con mucha energía..."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div formArrayName="ejercicios">
-                <div *ngFor="let ejercicio of ejerciciosControls.controls; let i=index" [formGroupName]="i" class="card border-0 shadow-sm mb-3">
-
-                    <div class="card-header d-flex justify-content-between align-items-center py-2"
-                         [ngClass]="isExerciseCompleted(i) ? 'bg-light' : 'bg-dark text-white'">
-
-                        <span class="fw-bold small" [class.text-muted]="isExerciseCompleted(i)">
-                            EJERCICIO {{ i + 1 }}
-                        </span>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="form-check form-switch m-0" *ngIf="isExerciseCompleted(i) || !isExerciseCompleted(i)">
-                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                       [checked]="isExerciseCompleted(i)"
-                                       (change)="toggleExerciseCompletion(i)">
-                                <label class="form-check-label small ms-1" [class.text-white]="!isExerciseCompleted(i)">
-                                    {{ isExerciseCompleted(i) ? 'Terminado' : 'Activo' }}
-                                </label>
-                            </div>
-
-                            <i class="bi bi-trash cursor-pointer ms-2"
-                               [class.text-muted]="isExerciseCompleted(i)"
-                               [class.text-white-50]="!isExerciseCompleted(i)"
-                               (click)="removeEjercicio(i)"></i>
-                        </div>
-                    </div>
-
-                    <div class="card-body" *ngIf="!isExerciseCompleted(i)">
-                        <input type="text" class="form-control mb-3 fw-bold border-0 bg-light" formControlName="nombre" placeholder="Nombre Ejercicio">
-
-                        <div formArrayName="series">
-                            <div class="row g-2 mb-2 px-1" *ngIf="getSeriesControls(i).length > 0">
-                                <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">META</small></div>
-                                <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">PESO (KG)</small></div>
-                                <div class="col-3"><small class="text-muted fw-bold" style="font-size: 0.65rem;">REPS</small></div>
-                                <div class="col-2"></div> <div class="col-1"></div> </div>
-
-                            <div *ngFor="let serie of getSeriesControls(i).controls; let j=index" [formGroupName]="j" class="row g-2 mb-3 align-items-start">
-                                <div class="col-3 d-flex flex-column align-items-center">
-                                    <div class="d-flex align-items-center justify-content-center bg-light rounded w-100" style="height: 38px;">
-                                        <small class="text-muted fw-bold" style="font-size: 0.8rem;">{{ serie.get('metaReps')?.value || '-' }}</small>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <input type="number" class="form-control text-center fw-bold" formControlName="peso">
-                                    <small *ngIf="getLastSeriesInfo(ejercicio.value.nombre, j)"
-                                           class="d-block text-center text-muted mt-1 fade-in"
-                                           style="font-size: 0.65rem; white-space: nowrap;">
-                                        <i class="bi bi-clock-history me-1"></i>{{ getLastSeriesInfo(ejercicio.value.nombre, j) }}
-                                    </small>
-                                </div>
-                                <div class="col-3">
-                                    <input type="number" class="form-control text-center" formControlName="repeticiones">
-                                </div>
-
-                                <div class="col-2 text-center">
-                                    <button type="button" class="btn btn-sm btn-light text-main-green border-0" (click)="startRest()">
-                                        <i class="bi bi-stopwatch"></i>
-                                    </button>
-                                </div>
-
-                                <div class="col-1 text-center">
-                                    <i class="bi bi-x text-danger cursor-pointer" (click)="removeSerie(i, j)"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="button" class="btn btn-sm btn-light w-100 mt-2 text-primary fw-bold dashed-border" (click)="addSerie(i)">+ Agregar Serie</button>
-                    </div>
-
-                    <div class="card-body bg-light text-center py-2" *ngIf="isExerciseCompleted(i)">
-                        <small class="text-muted fst-italic">
-                            <i class="bi bi-check-circle-fill text-success me-1"></i> Ejercicio finalizado
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-outline-dark w-100 py-3 mb-3 fw-bold dashed-border" (click)="addEjercicio()">+ AGREGAR EJERCICIO MANUAL</button>
-
-            <div class="fixed-bottom p-3 bg-white border-top shadow-lg" style="z-index: 1040;">
-                <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-pill" [disabled]="workoutForm.invalid || isLoading">
-                    {{ isLoading ? 'Guardando...' : 'FINALIZAR ENTRENAMIENTO' }}
-                </button>
-            </div>
-
-            <div style="height: 100px;"></div>
-        </form>
-    </div>
+      <div style="height: 100px"></div>
+    </form>
+  </div>
 </div>
 
 <div class="timer-widget shadow-lg" *ngIf="isTimerRunning">
-    <div class="d-flex align-items-center justify-content-between px-3 py-2">
-
-        <div class="d-flex align-items-center gap-3">
-            <div class="timer-display fw-bold text-dark fs-3">
-                {{ formatTime(timeLeft) }}
-            </div>
-            <div class="d-flex flex-column">
-                <small class="text-muted fw-bold" style="font-size: 0.7rem;">DESCANSANDO</small>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(10)">+10s</button>
-                    <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(-10)">-10s</button>
-                </div>
-            </div>
+  <div class="d-flex align-items-center justify-content-between px-3 py-2">
+    <div class="d-flex align-items-center gap-3">
+      <div class="timer-display fw-bold text-dark fs-3">
+        {{ formatTime(timeLeft) }}
+      </div>
+      <div class="d-flex flex-column">
+        <small class="text-muted fw-bold" style="font-size: 0.7rem">DESCANSANDO</small>
+        <div class="d-flex gap-1">
+          <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(10)">+10s</button>
+          <button class="btn btn-xs btn-outline-secondary py-0" (click)="addTime(-10)">-10s</button>
         </div>
-
-        <button class="btn btn-danger btn-sm rounded-circle shadow-sm" style="width: 40px; height: 40px;" (click)="stopRest()">
-            <i class="bi bi-x-lg"></i>
-        </button>
+      </div>
     </div>
 
-    <div class="progress" style="height: 4px;">
-        <div class="progress-bar bg-main-green transition-width" role="progressbar"
-             [style.width.%]="(timeLeft / restTime) * 100"></div>
-    </div>
+    <button
+      class="btn btn-danger btn-sm rounded-circle shadow-sm"
+      style="width: 40px; height: 40px"
+      (click)="stopRest()"
+    >
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="progress" style="height: 4px">
+    <div
+      class="progress-bar bg-main-green transition-width"
+      role="progressbar"
+      [style.width.%]="(timeLeft / restTime) * 100"
+    ></div>
+  </div>
 </div>

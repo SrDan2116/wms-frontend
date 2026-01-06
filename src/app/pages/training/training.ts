@@ -5,7 +5,6 @@ import { TrainingService, HistorialEntrenamiento } from '../../services/training
 import { RoutinesService, Rutina, DiaRutina } from '../../services/routines/routines.service';
 import { RouterLink } from '@angular/router';
 import { FittrackAlert } from '../../utils/swal-custom';
-// --- IMPORTACIÓN NUEVA PARA EL AUTO-GUARDADO ---
 import { debounceTime } from 'rxjs/operators';
 
 interface CalendarDay {
@@ -45,6 +44,10 @@ export class TrainingComponent implements OnInit, OnDestroy {
   rutinaSeleccionada: Rutina | null = null;
   diasDisponibles: DiaRutina[] = [];
 
+  // --- NUEVO: Variables para controlar los Selects visualmente ---
+  currentRoutineId: any = "";
+  currentDayIndex: any = "";
+
   // FORMULARIO
   workoutForm: FormGroup = this.fb.group({
     nombreRutina: ['', Validators.required],
@@ -53,15 +56,13 @@ export class TrainingComponent implements OnInit, OnDestroy {
     ejercicios: this.fb.array([])
   });
 
-  // --- VARIABLES TEMPORIZADOR & KEEP-ALIVE ---
+  // VARIABLES TEMPORIZADOR
   pingInterval: any;
   timerInterval: any;
-
   restTime = 90;
   timeLeft = 0;
   isTimerRunning = false;
 
-  // --- NUEVO: Clave para localStorage ---
   private readonly STORAGE_KEY = 'fittrack_temp_workout_v1';
 
   // =========================================================
@@ -71,13 +72,11 @@ export class TrainingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.generateCalendar();
     if (!this.selectedDate) this.selectDate(new Date());
+
+    // Cargamos datos. NOTA: restoreDraft se llamará cuando carguen las rutinas
     this.loadHistory();
     this.loadMyRoutines();
 
-    // 1. Intentar restaurar datos guardados
-    this.restoreDraft();
-
-    // 2. Configurar el auto-guardado
     this.setupAutoSave();
 
     this.pingInterval = setInterval(() => {
@@ -91,76 +90,188 @@ export class TrainingComponent implements OnInit, OnDestroy {
   }
 
   // =========================================================
-  // --- NUEVO: LÓGICA DE AUTO-GUARDADO Y RESTAURACIÓN ---
+  // AUTO-GUARDADO Y RESTAURACIÓN
   // =========================================================
 
   setupAutoSave() {
-    // Guarda 500ms después de que dejes de escribir
     this.workoutForm.valueChanges
       .pipe(debounceTime(500))
       .subscribe(val => {
-        // Solo guardamos si hay ejercicios para evitar guardar formularios vacíos
         if (val.ejercicios && val.ejercicios.length > 0) {
-          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(val));
+          // Guardamos el formulario Y el contexto (IDs de los selects)
+          const backupState = {
+             form: val,
+             meta: {
+                 routineId: this.currentRoutineId,
+                 dayIndex: this.currentDayIndex
+             }
+          };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(backupState));
         }
       });
   }
 
   restoreDraft() {
     const draftJson = localStorage.getItem(this.STORAGE_KEY);
-    if (draftJson) {
-      try {
-        const draft = JSON.parse(draftJson);
+    if (!draftJson) return;
 
-        // Limpiamos el form actual
-        this.ejerciciosControls.clear();
+    try {
+      const state = JSON.parse(draftJson);
+      const draft = state.form; // Los datos del formulario
+      const meta = state.meta;  // Los IDs de rutina y día
 
-        // Reconstruimos la estructura del formulario (Ejercicios y Series)
-        if (draft.ejercicios && Array.isArray(draft.ejercicios)) {
-          draft.ejercicios.forEach((ej: any) => {
+      // 1. Restaurar contexto de Rutina (para que se llenen los selects y variables)
+      if (meta && meta.routineId) {
+          this.currentRoutineId = meta.routineId;
+          this.rutinaSeleccionada = this.misRutinas.find(r => r.id == this.currentRoutineId) || null;
 
-            const seriesFormArray = this.fb.array([]);
-
-            if (ej.series && Array.isArray(ej.series)) {
-              ej.series.forEach((s: any) => {
-                // CORRECCIÓN DE TIPO: 'as any' para evitar error de compilación
-                seriesFormArray.push(this.createSerieGroup(s.metaReps || '-') as any);
-              });
-            }
-
-            const ejercicioGroup = this.fb.group({
-              nombre: [ej.nombre || '', Validators.required],
-              completed: [ej.completed || false],
-              series: seriesFormArray
-            });
-
-            this.ejerciciosControls.push(ejercicioGroup);
-          });
-        }
-
-        // Aplicamos los valores
-        this.workoutForm.patchValue(draft);
-
-        // Activamos la pestaña de registro
-        this.activeTab = 'NEW';
-
-        // Notificación discreta
-        const Toast = FittrackAlert.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-        Toast.fire({ icon: 'info', title: 'Sesión restaurada' });
-
-      } catch (e) {
-        console.error('Error al restaurar borrador', e);
-        this.clearDraft();
+          if (this.rutinaSeleccionada) {
+              this.diasDisponibles = this.rutinaSeleccionada.dias;
+          }
+          if (meta.dayIndex !== undefined && meta.dayIndex !== "") {
+              this.currentDayIndex = meta.dayIndex;
+          }
       }
+
+      // 2. Limpiar formulario actual
+      this.ejerciciosControls.clear();
+
+      // 3. Reconstruir formulario
+      if (draft.ejercicios && Array.isArray(draft.ejercicios)) {
+        draft.ejercicios.forEach((ej: any) => {
+
+          // --- IMPORTANTE: Aquí recuperamos los stats de la sesión anterior ---
+          this.findLastStatsForExercise(ej.nombre);
+
+          const seriesFormArray = this.fb.array([]);
+
+          if (ej.series && Array.isArray(ej.series)) {
+            ej.series.forEach((s: any) => {
+              seriesFormArray.push(this.createSerieGroup(s.metaReps || '-') as any);
+            });
+          }
+
+          const ejercicioGroup = this.fb.group({
+            nombre: [ej.nombre || '', Validators.required],
+            completed: [ej.completed || false],
+            series: seriesFormArray
+          });
+
+          this.ejerciciosControls.push(ejercicioGroup);
+        });
+      }
+
+      // 4. Parchar valores
+      this.workoutForm.patchValue(draft);
+      this.activeTab = 'NEW';
+
+      const Toast = FittrackAlert.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+      Toast.fire({ icon: 'info', title: 'Sesión recuperada' });
+
+    } catch (e) {
+      console.error('Error al restaurar borrador', e);
+      this.clearDraft();
     }
   }
 
   clearDraft() {
     localStorage.removeItem(this.STORAGE_KEY);
+    this.currentRoutineId = "";
+    this.currentDayIndex = "";
   }
 
   // =========================================================
-  // LÓGICA KEEP-ALIVE & TEMPORIZADOR
+  // CARGA DE DATOS
+  // =========================================================
+
+  loadMyRoutines() {
+    this.routinesService.getMyRoutines().subscribe({
+        next: (data) => {
+            this.misRutinas = data;
+            // Intentamos restaurar SOLO cuando ya tenemos las rutinas cargadas
+            // para poder vincular el ID guardado con la rutina real.
+            this.restoreDraft();
+        }
+    });
+  }
+
+  loadHistory() {
+    this.isLoading = true;
+    this.trainingService.getHistory().subscribe({
+      next: (data) => {
+        this.history = data;
+        this.generateCalendar();
+        this.isLoading = false;
+
+        // Si la restauración ocurrió ANTES de que llegara el historial,
+        // los stats estarían vacíos. Volvemos a buscarlos por si acaso.
+        if (this.ejerciciosControls.length > 0) {
+             this.ejerciciosControls.controls.forEach(control => {
+                 this.findLastStatsForExercise(control.get('nombre')?.value);
+             });
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // =========================================================
+  // LÓGICA DE SELECTORES (MODIFICADA)
+  // =========================================================
+
+  onRutinaSelect(event: any) {
+    const idRutina = event.target.value;
+
+    // Si el usuario cambia manualmente, borramos el borrador previo
+    this.clearDraft();
+
+    this.currentRoutineId = idRutina; // Actualizamos variable visual
+    this.currentDayIndex = "";        // Reseteamos día
+
+    this.rutinaSeleccionada = this.misRutinas.find(r => r.id == idRutina) || null;
+    if (this.rutinaSeleccionada) {
+        this.diasDisponibles = this.rutinaSeleccionada.dias;
+        this.workoutForm.patchValue({ nombreRutina: this.rutinaSeleccionada.nombre });
+    } else {
+        this.diasDisponibles = [];
+        this.rutinaSeleccionada = null;
+    }
+  }
+
+  onDiaSelect(event: any) {
+    const indexDia = event.target.value;
+    if (indexDia === "" || !this.rutinaSeleccionada) return;
+
+    // Si cambia manualmente, borramos borrador y cargamos plantilla limpia
+    this.clearDraft();
+
+    this.currentDayIndex = indexDia; // Actualizamos variable visual
+
+    const diaPlan = this.diasDisponibles[indexDia];
+
+    this.ejerciciosControls.clear();
+    this.lastSessionStats = {};
+
+    diaPlan.ejercicios.forEach(plan => {
+        this.findLastStatsForExercise(plan.nombre);
+
+        const ejercicioGroup = this.fb.group({
+            nombre: [plan.nombre, Validators.required],
+            completed: [false],
+            series: this.fb.array([])
+        });
+        for (let i = 0; i < plan.seriesObjetivo; i++) {
+            (ejercicioGroup.get('series') as FormArray).push(this.createSerieGroup(plan.repeticionesObjetivo) as any);
+        }
+        this.ejerciciosControls.push(ejercicioGroup);
+    });
+    this.workoutForm.patchValue({ nombreRutina: `${this.rutinaSeleccionada.nombre} - ${diaPlan.nombre}` });
+  }
+
+  // =========================================================
+  // RESTO DEL CÓDIGO (Igual que antes)
   // =========================================================
 
   sendPing() {
@@ -207,10 +318,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
       } catch (e) { console.log('Audio no disponible'); }
   }
 
-  // =========================================================
-  // LÓGICA DE FORMULARIO MEJORADA (Checks)
-  // =========================================================
-
   isExerciseCompleted(index: number): boolean {
       return this.ejerciciosControls.at(index).get('completed')?.value;
   }
@@ -224,15 +331,10 @@ export class TrainingComponent implements OnInit, OnDestroy {
       }
   }
 
-  // =========================================================
-  // LÓGICA DE COMPARACIÓN (ÚLTIMA VEZ)
-  // =========================================================
-
   findLastStatsForExercise(nombreEjercicio: string) {
     const lastWorkout = this.history.find(h =>
         h.ejerciciosRealizados.some(e => e.nombreEjercicio === nombreEjercicio)
     );
-
     if (lastWorkout) {
         const exerciseData = lastWorkout.ejerciciosRealizados.find(e => e.nombreEjercicio === nombreEjercicio);
         if (exerciseData) {
@@ -248,29 +350,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
           return `${s.peso}kg x ${s.repeticiones}`;
       }
       return null;
-  }
-
-  // =========================================================
-  // LÓGICA DE CARGA DE DATOS
-  // =========================================================
-
-  loadMyRoutines() {
-    this.routinesService.getMyRoutines().subscribe({ next: (data) => this.misRutinas = data });
-  }
-
-  loadHistory() {
-    this.isLoading = true;
-    this.trainingService.getHistory().subscribe({
-      next: (data) => {
-        this.history = data;
-        this.generateCalendar();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error al cargar historial', err);
-        this.isLoading = false;
-      }
-    });
   }
 
   // --- LÓGICA CALENDARIO ---
@@ -347,58 +426,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
     if (tab === 'HISTORY' && this.history.length === 0) this.loadHistory();
   }
 
-  // --- RUTINAS Y FORMULARIO ---
-  onRutinaSelect(event: any) {
-    const idRutina = event.target.value;
-    // Limpiamos borrador al cambiar rutina para evitar mezclas
-    this.clearDraft();
-
-    this.rutinaSeleccionada = this.misRutinas.find(r => r.id == idRutina) || null;
-    if (this.rutinaSeleccionada) {
-        this.diasDisponibles = this.rutinaSeleccionada.dias;
-        this.workoutForm.patchValue({ nombreRutina: this.rutinaSeleccionada.nombre });
-    } else {
-        this.diasDisponibles = [];
-        this.rutinaSeleccionada = null;
-    }
-  }
-
-  onDiaSelect(event: any) {
-    const indexDia = event.target.value;
-    if (indexDia === "" || !this.rutinaSeleccionada) return;
-
-    // Limpiamos borrador al cargar template nuevo
-    this.clearDraft();
-
-    const diaPlan = this.diasDisponibles[indexDia];
-
-    // Limpiamos los inputs anteriores
-    this.ejerciciosControls.clear();
-
-    // Limpiamos los stats de la sesión anterior
-    this.lastSessionStats = {};
-
-    diaPlan.ejercicios.forEach(plan => {
-        // Buscamos el historial para este ejercicio
-        this.findLastStatsForExercise(plan.nombre);
-
-        const ejercicioGroup = this.fb.group({
-            nombre: [plan.nombre, Validators.required],
-            completed: [false],
-            series: this.fb.array([])
-        });
-        for (let i = 0; i < plan.seriesObjetivo; i++) {
-            // CORRECCIÓN DE TIPO: 'as any'
-            (ejercicioGroup.get('series') as FormArray).push(this.createSerieGroup(plan.repeticionesObjetivo) as any);
-        }
-        this.ejerciciosControls.push(ejercicioGroup);
-    });
-    this.workoutForm.patchValue({ nombreRutina: `${this.rutinaSeleccionada.nombre} - ${diaPlan.nombre}` });
-  }
-
   get ejerciciosControls() { return (this.workoutForm.get('ejercicios') as FormArray); }
-
-  // CORRECCIÓN DE TIPO: 'as FormArray<any>' para permitir acceso genérico
   getSeriesControls(index: number) { return (this.ejerciciosControls.at(index).get('series') as FormArray<any>); }
 
   addEjercicio() {
@@ -407,7 +435,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
         completed: [false],
         series: this.fb.array([])
     });
-    // CORRECCIÓN DE TIPO: 'as any'
     (g.get('series') as FormArray).push(this.createSerieGroup() as any);
     this.ejerciciosControls.push(g);
   }
@@ -419,8 +446,6 @@ export class TrainingComponent implements OnInit, OnDestroy {
     const last = series.length > 0 ? series.at(series.length - 1).value : null;
     const s = this.createSerieGroup();
     if (last) s.patchValue({ peso: last.peso, repeticiones: last.repeticiones });
-
-    // CORRECCIÓN DE TIPO: 'as any'
     series.push(s as any);
   }
 
@@ -456,8 +481,7 @@ export class TrainingComponent implements OnInit, OnDestroy {
 
     this.trainingService.saveWorkout(payload).subscribe({
       next: (nuevo) => {
-        // Borramos el borrador al guardar exitosamente
-        this.clearDraft();
+        this.clearDraft(); // Borramos borrador al finalizar
 
         this.history.unshift(nuevo);
         this.generateCalendar();
